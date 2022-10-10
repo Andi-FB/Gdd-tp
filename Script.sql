@@ -1,159 +1,340 @@
-USE GD2C2022;
+USE [GD2C2022];
+
+-- Elimino FKs de ejecuciones pasadas...
+DECLARE @borrarFKs NVARCHAR(MAX) = N'';
+
+SELECT @borrarFKs  += N'
+ALTER TABLE ' + QUOTENAME(OBJECT_SCHEMA_NAME(parent_object_id))
+    + '.' + QUOTENAME(OBJECT_NAME(parent_object_id)) + 
+    ' DROP CONSTRAINT ' + QUOTENAME(name) + ';'
+FROM sys.foreign_keys;
+EXEC sp_executesql @borrarFKs 
+GO
+
+-- DROP TABLES
+
+IF OBJECT_ID ('AguanteMySql36.Descuento') IS NOT NULL DROP TABLE AguanteMySql36.Descuento;
+IF OBJECT_ID ('AguanteMySql36.Descuento_x_compra') IS NOT NULL DROP TABLE AguanteMySql36.Descuento_x_compra;
+IF OBJECT_ID ('AguanteMySql36.Descuento_x_venta') IS NOT NULL DROP TABLE AguanteMySql36.Descuento_x_venta;
+IF OBJECT_ID ('AguanteMySql36.Descuento_compra') IS NOT NULL DROP TABLE AguanteMySql36.Descuento_compra;
+IF OBJECT_ID ('AguanteMySql36.Descuento_venta') IS NOT NULL DROP TABLE AguanteMySql36.Descuento_venta;
+IF OBJECT_ID ('AguanteMySql36.Medios_de_pago') IS NOT NULL DROP TABLE AguanteMySql36.Medios_de_pago;
+IF OBJECT_ID ('AguanteMySql36.Producto_venta_por_compra') IS NOT NULL DROP TABLE AguanteMySql36.Producto_venta_por_compra;
+IF OBJECT_ID ('AguanteMySql36.Producto_venta_por_venta') IS NOT NULL DROP TABLE AguanteMySql36.Producto_venta_por_venta;
+IF OBJECT_ID ('AguanteMySql36.Variantes_por_Producto') IS NOT NULL DROP TABLE AguanteMySql36.Variantes_por_Producto;
+IF OBJECT_ID ('AguanteMySql36.variante') IS NOT NULL DROP TABLE AguanteMySql36.variante;
+IF OBJECT_ID ('AguanteMySql36.Cupon_x_venta') IS NOT NULL DROP TABLE AguanteMySql36.Cupon_x_venta;
+IF OBJECT_ID ('AguanteMySql36.Producto') IS NOT NULL DROP TABLE AguanteMySql36.Producto;
+IF OBJECT_ID ('AguanteMySql36.Tipo_variante') IS NOT NULL DROP TABLE AguanteMySql36.Tipo_variante;
+IF OBJECT_ID ('AguanteMySql36.Venta') IS NOT NULL DROP TABLE AguanteMySql36.Venta;
+IF OBJECT_ID ('AguanteMySql36.Cliente') IS NOT NULL DROP TABLE AguanteMySql36.Cliente;
+IF OBJECT_ID ('AguanteMySql36.Envio') IS NOT NULL DROP TABLE AguanteMySql36.Envio;
+IF OBJECT_ID ('AguanteMySql36.Compra') IS NOT NULL DROP TABLE AguanteMySql36.Compra;
+IF OBJECT_ID ('AguanteMySql36.Proveedor') IS NOT NULL DROP TABLE AguanteMySql36.Proveedor;
+IF OBJECT_ID ('AguanteMySql36.Canal_venta') IS NOT NULL DROP TABLE AguanteMySql36.Canal_venta;
+IF OBJECT_ID ('AguanteMySql36.Medio_envio') IS NOT NULL DROP TABLE AguanteMySql36.Medio_envio;
+IF OBJECT_ID ('AguanteMySql36.Medios_de_pago_venta') IS NOT NULL DROP TABLE AguanteMySql36.Medios_de_pago_venta;
+IF OBJECT_ID ('AguanteMySql36.Barrio') IS NOT NULL DROP TABLE AguanteMySql36.Barrio;
+IF OBJECT_ID ('AguanteMySql36.Categoria') IS NOT NULL DROP TABLE AguanteMySql36.Categoria;
+IF OBJECT_ID ('AguanteMySql36.Descuento_venta') IS NOT NULL DROP TABLE AguanteMySql36.Descuento_venta;
+IF OBJECT_ID ('AguanteMySql36.Marca') IS NOT NULL DROP TABLE AguanteMySql36.Marca;
+IF OBJECT_ID ('AguanteMySql36.Material') IS NOT NULL DROP TABLE AguanteMySql36.Material;
+IF OBJECT_ID ('AguanteMySql36.Medios_de_pago_compra') IS NOT NULL DROP TABLE AguanteMySql36.Medios_de_pago_compra;
+IF OBJECT_ID ('AguanteMySql36.Cupon') IS NOT NULL DROP TABLE AguanteMySql36.Cupon;
+IF OBJECT_ID ('AguanteMySql36.provincias') IS NOT NULL DROP TABLE AguanteMySql36.provincias;
+IF OBJECT_ID ('AguanteMySql36.Producto_por_compra') IS NOT NULL DROP TABLE AguanteMySql36.Producto_por_compra;
+IF OBJECT_ID ('AguanteMySql36.producto_variante') IS NOT NULL DROP TABLE AguanteMySql36.producto_variante;
+IF OBJECT_ID ('AguanteMySql36.Productos_por_Venta') IS NOT NULL DROP TABLE AguanteMySql36.Productos_por_Venta;
+GO
+
+-- DROP SCHEMA
+
+IF EXISTS(
+SELECT * FROM sys.schemas where name = 'AguanteMySql36'
+)
+BEGIN
+	DROP SCHEMA [AguanteMySql36]
+
+END
+GO
+CREATE SCHEMA AguanteMySql36;
+GO
 
 
-CREATE TABLE [Cliente] (
-  [cliente_id] INT,
-  [nombre] varchar(255),
-  [dni] INT,
-  [provincia] varchar(255),
-  [codigo_postal] INT,
-  PRIMARY KEY ([cliente_id])
-);
-
-CREATE TABLE [Envio] (
-  [id] INT IDENTITY(1,1),
-  [medio_envio] varchar(30),
-  [codigo_postal] INT,
-  [importe] DECIMAL(18,2),
+CREATE TABLE [AguanteMySql36].[Canal_venta] (
+  [id] int IDENTITY(1,1),
+  [nombre] varchar,
   PRIMARY KEY ([id])
 );
 
-CREATE TABLE [Venta] (
-  [num_venta] Int,
+CREATE TABLE [AguanteMySql36].[Cliente] (
   [cliente_id] INT,
-  [envio_id] INT,
-  [id_medio_pago] INT,
-  [fecha_venta] date,
-  [canal_venta] varchar(255),
-  [medio_pago_costo] decimal(18,2),
-  [total] varchar(30),
-  PRIMARY KEY ([num_venta]),
-  CONSTRAINT [FK_Venta.cliente_id]
-    FOREIGN KEY ([cliente_id])
-      REFERENCES [Cliente](cliente_id),
-  CONSTRAINT [FK_Venta.envio_id]
-    FOREIGN KEY ([envio_id])
-      REFERENCES [Envio]([id])
-);
-
-CREATE TABLE [Tipo_variante] (
-  [tipo_variante_id] Int,
   [nombre] varchar(255),
-  PRIMARY KEY ([tipo_variante_id])
+  [apellido] varchar(255),
+  [dni] INT,
+  [provincia] varchar(255),
+  [codigo_postal] INT,
+  [direccion] varchar(255),
+  [telefono] decimal(18,0),
+  [mail] varchar(255),
+  [fecha_nacimiento] date,
+  [localidad] varchar(255),
+  PRIMARY KEY ([cliente_id])
 );
 
-CREATE TABLE [Producto] (
-  [producto_id] INT,
-  [tipo_variante_id] Int,
-  PRIMARY KEY ([producto_id]),
-  CONSTRAINT [FK_Producto.producto_id]
-    FOREIGN KEY ([producto_id])
-      REFERENCES [Tipo_variante]([tipo_variante_id])
-);
-
-CREATE TABLE [Producto_venta_por_Venta] (
-  [num_venta] int,
-  [id_producto] int,
-  [cantidad_vendida] decimal(18,2),
-  [precio_unitario] decimal(18,2),
-  [total] decimal(18,2),
-  PRIMARY KEY ([num_venta], [id_producto]),
-  CONSTRAINT [FK_Producto_venta_por_Venta.num_venta]
-    FOREIGN KEY ([num_venta])
-      REFERENCES [Venta]([num_venta]),
-  CONSTRAINT [FK_Producto_venta_por_Venta.id_producto]
-    FOREIGN KEY ([id_producto])
-      REFERENCES [Producto]([producto_id])
-);
-
-CREATE TABLE [variante] (
-  [variante_id] int,
-  [tipo_variante_id] Int,
-  [nombre] varchar(255),
-  PRIMARY KEY ([variante_id])
-);
-
-CREATE TABLE [Medios_de_pago] (
-  [id_medio_pago] Int,
+CREATE TABLE [AguanteMySql36].[Medios_de_pago_venta] (
+  [id_medio_pago] Int IDENTITY(1,1),
   [tipo] varchar(50),
-  [costo_transacccion] decimal(18,2),
+  [costo_transaccion] decimal(18,2),
   [descuento_medio] decimal(3,1),
   PRIMARY KEY ([id_medio_pago])
 );
 
-CREATE TABLE [Variantes_por_Producto] (
-  [tipo_variante] int,
-  [nombre_id] varchar(255),
-  [variante_id] int,
-  PRIMARY KEY ([tipo_variante], [variante_id])
+CREATE TABLE [AguanteMySql36].[Medio_envio] (
+  [id] int IDENTITY(1,1),
+  [nombre_medio_envio] varchar,
+  PRIMARY KEY ([id])
 );
 
-CREATE TABLE [Descuento] (
-  [id_descuento] Int,
-  [importe] decimal(18,2),
-  PRIMARY KEY ([id_descuento])
+CREATE TABLE [AguanteMySql36].[provincias] (
+  [id] int IDENTITY(1,1),
+  [nombre] varchar(255),
+  PRIMARY KEY ([id])
 );
 
-CREATE TABLE [Cupon] (
+CREATE TABLE [AguanteMySql36].[Barrio] (
+  [codigo_postal] int,
+  [provincia_id] int,
+  [nombre] varchar,
+  PRIMARY KEY ([codigo_postal]),
+  CONSTRAINT [FK_Barrio.provincia_id]
+    FOREIGN KEY ([provincia_id])
+      REFERENCES [AguanteMySql36].[provincias]([id])
+);
+
+CREATE TABLE [AguanteMySql36].[Envio] (
+  [envio_id] int IDENTITY(1,1),
+  [codigo_postal] INT,
+  [medio_envio_id] int,
+  PRIMARY KEY ([envio_id]),
+  CONSTRAINT [FK_Envio.medio_envio_id]
+    FOREIGN KEY ([medio_envio_id])
+      REFERENCES [AguanteMySql36].[Medio_envio]([id]),
+  CONSTRAINT [FK_Envio.codigo_postal]
+    FOREIGN KEY ([codigo_postal])
+      REFERENCES [AguanteMySql36].[Barrio]([codigo_postal])
+);
+
+CREATE TABLE [AguanteMySql36].[Venta] (
+  [num_venta] Int,
+  [cliente_id] int,
+  [envio_id] int,
+  [id_medio_pago] Int,
+  [fecha_venta] DATETIME,
+  [medio_pago_costo] decimal(18,2),
+  [canal_venta_costo] decimal(18,2),
+  [total] varchar(30),
+  [canal_venta] int,
+  PRIMARY KEY ([num_venta]),
+  CONSTRAINT [FK_Venta.canal_venta]
+    FOREIGN KEY ([canal_venta])
+      REFERENCES [AguanteMySql36].[Canal_venta]([id]),
+  CONSTRAINT [FK_Venta.cliente_id]
+    FOREIGN KEY ([cliente_id])
+      REFERENCES [AguanteMySql36].[Cliente]([cliente_id]),
+  CONSTRAINT [FK_Venta.id_medio_pago]
+    FOREIGN KEY ([id_medio_pago])
+      REFERENCES [AguanteMySql36].[Medios_de_pago_venta]([id_medio_pago]),
+  CONSTRAINT [FK_Venta.envio_id]
+    FOREIGN KEY ([envio_id])
+      REFERENCES [AguanteMySql36].[Envio]([envio_id])
+);
+
+CREATE TABLE [AguanteMySql36].[Cupon] (
   [cupon_codigo] INT,
-  [fecha_desde] date,
-  [fecha_hasta] date,
+  [fecha_desde] DATETIME,
+  [fecha_hasta] DATETIME,
   [tipo] varchar(50),
   [valor] decimal(10,2),
   PRIMARY KEY ([cupon_codigo])
 );
 
-CREATE TABLE [Proveedor] (
-  [id] int,
+CREATE TABLE [AguanteMySql36].[Cupon_x_venta] (
+  [cupon_codigo] Int,
+  [num_venta] Int,
+  CONSTRAINT [FK_Cupon_x_venta.num_venta]
+    FOREIGN KEY ([num_venta])
+      REFERENCES [AguanteMySql36].[Venta]([num_venta]),
+  CONSTRAINT [FK_Cupon_x_venta.cupon_codigo]
+    FOREIGN KEY ([cupon_codigo])
+      REFERENCES [AguanteMySql36].[Cupon]([cupon_codigo])
+);
+
+CREATE TABLE [AguanteMySql36].[Descuento_venta] (
+  [id_concepto] Int IDENTITY(1,1),
+  [nombre] varchar(255),
+  PRIMARY KEY ([id_concepto])
+);
+
+CREATE TABLE [AguanteMySql36].[Tipo_variante] (
+  [tipo_variante_id] Int IDENTITY(1,1),
+  [descripcion] varchar(255),
+  PRIMARY KEY ([tipo_variante_id])
+);
+
+CREATE TABLE [AguanteMySql36].[variante] (
+  [variante_id] int IDENTITY(1,1),
+  [tipo_variante_id] Int,
+  [descripcion] varchar(255),
+  PRIMARY KEY ([variante_id]),
+  CONSTRAINT [FK_variante.tipo_variante_id]
+    FOREIGN KEY ([tipo_variante_id])
+      REFERENCES [AguanteMySql36].[Tipo_variante]([tipo_variante_id])
+);
+
+CREATE TABLE [AguanteMySql36].[material] (
+  [material_id] Int IDENTITY(1,1),
+  [nombre] varchar(255),
+  PRIMARY KEY ([material_id])
+);
+
+CREATE TABLE [AguanteMySql36].[Categoria] (
+  [categoria_id] Int IDENTITY(1,1),
+  [nombre] varchar(255),
+  PRIMARY KEY ([categoria_id])
+);
+
+CREATE TABLE [AguanteMySql36].[Marca] (
+  [marca_id] Int IDENTITY(1,1),
+  [nombre] varchar(255),
+  PRIMARY KEY ([marca_id])
+);
+
+CREATE TABLE [AguanteMySql36].[Producto] (
+  [producto_id] nvarchar(50),
+  [marca_id] int,
+  [categoria_id] int,
+  [material_id] int,
+  [nombre] varchar(50),
+  [descripcion] varchar(50),
+  PRIMARY KEY ([producto_id]),
+  CONSTRAINT [FK_Producto.material_id]
+    FOREIGN KEY ([material_id])
+      REFERENCES [AguanteMySql36].[material]([material_id]),
+  CONSTRAINT [FK_Producto.categoria_id]
+    FOREIGN KEY ([categoria_id])
+      REFERENCES [AguanteMySql36].[Categoria]([categoria_id]),
+  CONSTRAINT [FK_Producto.marca_id]
+    FOREIGN KEY ([marca_id])
+      REFERENCES [AguanteMySql36].[Marca]([marca_id])
+);
+
+CREATE TABLE [AguanteMySql36].[producto_variante] (
+  [producto_variante_codigo] int IDENTITY(1,1),
+  [producto_id] nvarchar(50),
+  [variante_id] Int,
+  [precio_unitario] decimal(18,0),
+  [stock] int,
+  PRIMARY KEY ([producto_variante_codigo]),
+  CONSTRAINT [FK_producto_variante.variante_id]
+    FOREIGN KEY ([variante_id])
+      REFERENCES [AguanteMySql36].[variante]([variante_id]),
+  CONSTRAINT [FK_producto_variante.producto_id]
+    FOREIGN KEY ([producto_id])
+      REFERENCES [AguanteMySql36].[Producto]([producto_id])
+);
+
+CREATE TABLE [AguanteMySql36].[Medios_de_pago_compra] (
+  [id_medio_pago] Int IDENTITY(1,1),
+  [tipo] varchar(50),
+  [costo_transaccion] decimal(18,2),
+  PRIMARY KEY ([id_medio_pago])
+);
+
+CREATE TABLE [AguanteMySql36].[Proveedor] (
+  [id_proveedor] int IDENTITY(1,1),
   [CUIT] varchar(50),
   [razon_social] varchar(50),
   [domicilio] varchar(50),
-  [localidad] varchar(50),
+  [telefono] varchar(50),
   [mail] varchar(50),
-  [provincia] varchar(255),
+  [provincia_id] int,
+  [localidad] varchar(255),
   [codigo_postal] decimal(18,0),
-  PRIMARY KEY ([id])
+  PRIMARY KEY ([id_proveedor])
 );
 
-CREATE TABLE [Compra] (
+CREATE TABLE [AguanteMySql36].[Compra] (
   [num_compra] int,
-  [fecha_compra] DATETIME,
   [proveedor_id] int,
+  [id_medio_pago] int,
+  [fecha] DATETIME,
   [total] decimal(18,2),
   PRIMARY KEY ([num_compra]),
-  CONSTRAINT [FK_Compra.num_compra]
-    FOREIGN KEY ([num_compra])
-      REFERENCES [Proveedor]([id])
+  CONSTRAINT [FK_Compra.id_medio_pago]
+    FOREIGN KEY ([id_medio_pago])
+      REFERENCES [AguanteMySql36].[Medios_de_pago_compra]([id_medio_pago]),
+  CONSTRAINT [FK_Compra.proveedor_id]
+    FOREIGN KEY ([proveedor_id])
+      REFERENCES [AguanteMySql36].[Proveedor]([id_proveedor])
 );
 
-CREATE TABLE [Descuento_x_venta] (
-  [id_descuento] Int,
-  [num_venta] Int
-);
 
-CREATE TABLE [Cupon_x_venta] (
-  [num_venta] Int,
-  [cupon_codigo] Int,
-  CONSTRAINT [FK_Cupon_x_venta.num_venta]
-    FOREIGN KEY ([num_venta])
-      REFERENCES [Venta]([num_venta])
-);
-
-CREATE TABLE [Producto_venta_por_compra] (
+CREATE TABLE [AguanteMySql36].[Producto_por_compra] (
   [num_compra] int,
-  [id_producto] int,
+  [producto_variante_codigo] int,
   [cantidad_comprada] decimal(18,2),
   [precio_unitario] decimal(18,2),
   [total] decimal(18,2),
-  PRIMARY KEY ([num_compra], [id_producto])
+  PRIMARY KEY ([num_compra]),
+  CONSTRAINT [FK_Producto_por_compra.producto_variante_codigo]
+    FOREIGN KEY ([producto_variante_codigo])
+      REFERENCES [AguanteMySql36].[producto_variante]([producto_variante_codigo]),
+  CONSTRAINT [FK_Producto_por_compra.num_compra]
+    FOREIGN KEY ([num_compra])
+      REFERENCES [AguanteMySql36].[Compra]([num_compra])
 );
 
-CREATE TABLE [Descuento_x_compra] (
+CREATE TABLE [AguanteMySql36].[Productos_por_Venta] (
+  [num_venta] int,
+  [producto_variante_codigo] int,
+  [cantidad_vendida] decimal(18,2),
+  [total] decimal(18,2),
+  PRIMARY KEY ([num_venta]),
+  CONSTRAINT [FK_Productos_por_Venta.producto_variante_codigo]
+    FOREIGN KEY ([producto_variante_codigo])
+      REFERENCES [AguanteMySql36].[producto_variante]([producto_variante_codigo]),
+  CONSTRAINT [FK_Productos_por_Venta.num_venta]
+    FOREIGN KEY ([num_venta])
+      REFERENCES [AguanteMySql36].[Venta]([num_venta])
+);
+
+CREATE TABLE [AguanteMySql36].[Descuento_x_venta] (
+  [id_descuento] Int IDENTITY(1,1),
+  [num_venta] Int,
+  [importe_descuento] decimal(18,2),
+  CONSTRAINT [FK_Descuento_x_venta.id_descuento]
+    FOREIGN KEY ([id_descuento])
+      REFERENCES [AguanteMySql36].[Descuento_venta]([id_concepto]),
+  CONSTRAINT [FK_Descuento_x_venta.num_venta]
+    FOREIGN KEY ([num_venta])
+      REFERENCES [AguanteMySql36].[Venta]([num_venta])
+);
+
+CREATE TABLE [AguanteMySql36].[Descuento_compra] (
+  [id_descuento] Int IDENTITY(1,1),
+  [porcentaje] decimal(18,2),
+  PRIMARY KEY ([id_descuento])
+);
+
+CREATE TABLE [AguanteMySql36].[Descuento_x_compra] (
   [id_descuento] Int,
   [num_compra] Int,
   CONSTRAINT [FK_Descuento_x_compra.id_descuento]
     FOREIGN KEY ([id_descuento])
-      REFERENCES [Compra]([num_compra])
+      REFERENCES [AguanteMySql36].[Descuento_compra]([id_descuento]),
+  CONSTRAINT [FK_Descuento_x_compra.num_compra]
+    FOREIGN KEY ([num_compra])
+      REFERENCES [AguanteMySql36].[Compra]([num_compra])
 );
-
 
