@@ -116,6 +116,7 @@ CREATE TABLE [AguanteMySql36].[Envio] (
   [envio_id] int IDENTITY(1,1),
   [codigo_postal] INT,
   [medio_envio_id] int,
+  [precio_envio] decimal(18,2),
   PRIMARY KEY ([envio_id]),
   CONSTRAINT [FK_Envio.medio_envio_id]
     FOREIGN KEY ([medio_envio_id])
@@ -132,6 +133,8 @@ CREATE TABLE [AguanteMySql36].[Venta] (
   [id_medio_pago] Int,
   [fecha_venta] DATETIME,
   [medio_pago_costo] decimal(18,2),
+  [medio_pago_descuento] decimal(18,2),
+  [envio_costo] decimal(18,2),
   [canal_venta_costo] decimal(18,2),
   [total] varchar(30),
   [canal_venta] int,
@@ -265,11 +268,12 @@ CREATE TABLE [AguanteMySql36].[Proveedor] (
 );
 
 CREATE TABLE [AguanteMySql36].[Compra] (
-  [num_compra] int,
+  [num_compra] decimal(19,0),
   [proveedor_id] int,
-  [id_medio_pago] int,
-  [fecha] DATETIME,
+  [id_medio_pago] nvarchar(255),
+  [fecha] DATE,
   [total] decimal(18,2),
+  [medio_pago_costo] decimal(18,2),
   PRIMARY KEY ([num_compra]),
   CONSTRAINT [FK_Compra.id_medio_pago]
     FOREIGN KEY ([id_medio_pago])
@@ -281,7 +285,7 @@ CREATE TABLE [AguanteMySql36].[Compra] (
 
 
 CREATE TABLE [AguanteMySql36].[Producto_por_compra] (
-  [num_compra] int,
+  [num_compra] decimal(19,0),
   [producto_variante_codigo] int,
   [cantidad_comprada] decimal(18,2),
   [precio_unitario] decimal(18,2),
@@ -329,7 +333,8 @@ CREATE TABLE [AguanteMySql36].[Descuento_compra] (
 
 CREATE TABLE [AguanteMySql36].[Descuento_x_compra] (
   [id_descuento] Int,
-  [num_compra] Int,
+  [num_compra] decimal(19,0),
+  [descuento_aplicado] decimal(18,2),
   CONSTRAINT [FK_Descuento_x_compra.id_descuento]
     FOREIGN KEY ([id_descuento])
       REFERENCES [AguanteMySql36].[Descuento_compra]([id_descuento]),
