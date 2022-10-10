@@ -69,22 +69,22 @@ CREATE TABLE [AguanteMySql36].[Canal_venta] (
 
 CREATE TABLE [AguanteMySql36].[Cliente] (
   [cliente_id] INT,
-  [nombre] varchar(255),
-  [apellido] varchar(255),
+  [nombre] nvarchar(255),
+  [apellido] nvarchar(255),
   [dni] INT,
-  [provincia] varchar(255),
+  [provincia] nvarchar(255),
   [codigo_postal] INT,
-  [direccion] varchar(255),
+  [direccion] nvarchar(255),
   [telefono] decimal(18,0),
-  [mail] varchar(255),
+  [mail] nvarchar(255),
   [fecha_nacimiento] date,
-  [localidad] varchar(255),
+  [localidad] nvarchar(255),
   PRIMARY KEY ([cliente_id])
 );
 
 CREATE TABLE [AguanteMySql36].[Medios_de_pago_venta] (
   [id_medio_pago] Int IDENTITY(1,1),
-  [tipo] varchar(50),
+  [tipo] nvarchar(50),
   [costo_transaccion] decimal(18,2),
   [descuento_medio] decimal(3,1),
   PRIMARY KEY ([id_medio_pago])
@@ -98,7 +98,7 @@ CREATE TABLE [AguanteMySql36].[Medio_envio] (
 
 CREATE TABLE [AguanteMySql36].[provincias] (
   [id] int IDENTITY(1,1),
-  [nombre] varchar(255),
+  [nombre] nvarchar(255),
   PRIMARY KEY ([id])
 );
 
@@ -127,7 +127,7 @@ CREATE TABLE [AguanteMySql36].[Envio] (
 );
 
 CREATE TABLE [AguanteMySql36].[Venta] (
-  [num_venta] Int,
+  [num_venta] decimal(19,0),
   [cliente_id] int,
   [envio_id] int,
   [id_medio_pago] Int,
@@ -136,7 +136,7 @@ CREATE TABLE [AguanteMySql36].[Venta] (
   [medio_pago_descuento] decimal(18,2),
   [envio_costo] decimal(18,2),
   [canal_venta_costo] decimal(18,2),
-  [total] varchar(30),
+  [total] nvarchar(30),
   [canal_venta] int,
   PRIMARY KEY ([num_venta]),
   CONSTRAINT [FK_Venta.canal_venta]
@@ -157,14 +157,14 @@ CREATE TABLE [AguanteMySql36].[Cupon] (
   [cupon_codigo] INT,
   [fecha_desde] DATETIME,
   [fecha_hasta] DATETIME,
-  [tipo] varchar(50),
+  [tipo] nvarchar(50),
   [valor] decimal(10,2),
   PRIMARY KEY ([cupon_codigo])
 );
 
 CREATE TABLE [AguanteMySql36].[Cupon_x_venta] (
   [cupon_codigo] Int,
-  [num_venta] Int,
+  [num_venta] decimal(19,0),
   CONSTRAINT [FK_Cupon_x_venta.num_venta]
     FOREIGN KEY ([num_venta])
       REFERENCES [AguanteMySql36].[Venta]([num_venta]),
@@ -175,20 +175,20 @@ CREATE TABLE [AguanteMySql36].[Cupon_x_venta] (
 
 CREATE TABLE [AguanteMySql36].[Descuento_venta] (
   [id_concepto] Int IDENTITY(1,1),
-  [nombre] varchar(255),
+  [nombre] nvarchar(255),
   PRIMARY KEY ([id_concepto])
 );
 
 CREATE TABLE [AguanteMySql36].[Tipo_variante] (
   [tipo_variante_id] Int IDENTITY(1,1),
-  [descripcion] varchar(255),
+  [descripcion] nvarchar(255),
   PRIMARY KEY ([tipo_variante_id])
 );
 
 CREATE TABLE [AguanteMySql36].[variante] (
   [variante_id] int IDENTITY(1,1),
   [tipo_variante_id] Int,
-  [descripcion] varchar(255),
+  [descripcion] nvarchar(255),
   PRIMARY KEY ([variante_id]),
   CONSTRAINT [FK_variante.tipo_variante_id]
     FOREIGN KEY ([tipo_variante_id])
@@ -197,19 +197,19 @@ CREATE TABLE [AguanteMySql36].[variante] (
 
 CREATE TABLE [AguanteMySql36].[material] (
   [material_id] Int IDENTITY(1,1),
-  [nombre] varchar(255),
+  [nombre] nvarchar(255),
   PRIMARY KEY ([material_id])
 );
 
 CREATE TABLE [AguanteMySql36].[Categoria] (
   [categoria_id] Int IDENTITY(1,1),
-  [nombre] varchar(255),
+  [nombre] nvarchar(255),
   PRIMARY KEY ([categoria_id])
 );
 
 CREATE TABLE [AguanteMySql36].[Marca] (
   [marca_id] Int IDENTITY(1,1),
-  [nombre] varchar(255),
+  [nombre] nvarchar(255),
   PRIMARY KEY ([marca_id])
 );
 
@@ -218,8 +218,8 @@ CREATE TABLE [AguanteMySql36].[Producto] (
   [marca_id] int,
   [categoria_id] int,
   [material_id] int,
-  [nombre] varchar(50),
-  [descripcion] varchar(50),
+  [nombre] nvarchar(50),
+  [descripcion] nvarchar(50),
   PRIMARY KEY ([producto_id]),
   CONSTRAINT [FK_Producto.material_id]
     FOREIGN KEY ([material_id])
@@ -248,21 +248,21 @@ CREATE TABLE [AguanteMySql36].[producto_variante] (
 );
 
 CREATE TABLE [AguanteMySql36].[Medios_de_pago_compra] (
-  [id_medio_pago] Int IDENTITY(1,1),
-  [tipo] varchar(50),
+  [id_medio_pago] nvarchar(255),
+  [tipo] nvarchar(50),
   [costo_transaccion] decimal(18,2),
   PRIMARY KEY ([id_medio_pago])
 );
 
 CREATE TABLE [AguanteMySql36].[Proveedor] (
   [id_proveedor] int IDENTITY(1,1),
-  [CUIT] varchar(50),
-  [razon_social] varchar(50),
-  [domicilio] varchar(50),
-  [telefono] varchar(50),
-  [mail] varchar(50),
+  [CUIT] nvarchar(50),
+  [razon_social] nvarchar(50),
+  [domicilio] nvarchar(50),
+  [telefono] nvarchar(50),
+  [mail] nvarchar(50),
   [provincia_id] int,
-  [localidad] varchar(255),
+  [localidad] nvarchar(255),
   [codigo_postal] decimal(18,0),
   PRIMARY KEY ([id_proveedor])
 );
@@ -300,7 +300,7 @@ CREATE TABLE [AguanteMySql36].[Producto_por_compra] (
 );
 
 CREATE TABLE [AguanteMySql36].[Productos_por_Venta] (
-  [num_venta] int,
+  [num_venta] decimal(19,0),
   [producto_variante_codigo] int,
   [cantidad_vendida] decimal(18,2),
   [total] decimal(18,2),
@@ -315,7 +315,7 @@ CREATE TABLE [AguanteMySql36].[Productos_por_Venta] (
 
 CREATE TABLE [AguanteMySql36].[Descuento_x_venta] (
   [id_descuento] Int IDENTITY(1,1),
-  [num_venta] Int,
+  [num_venta] decimal(19,0),
   [importe_descuento] decimal(18,2),
   CONSTRAINT [FK_Descuento_x_venta.id_descuento]
     FOREIGN KEY ([id_descuento])
@@ -342,4 +342,3 @@ CREATE TABLE [AguanteMySql36].[Descuento_x_compra] (
     FOREIGN KEY ([num_compra])
       REFERENCES [AguanteMySql36].[Compra]([num_compra])
 );
-
