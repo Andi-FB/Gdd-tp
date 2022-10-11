@@ -71,9 +71,9 @@ CREATE TABLE [AguanteMySql36].[Cliente] (
   [cliente_id] INT,
   [nombre] nvarchar(255),
   [apellido] nvarchar(255),
-  [dni] INT,
+  [dni] decimal(18,0),
   [provincia] nvarchar(255),
-  [codigo_postal] INT,
+  [codigo_postal] decimal(18,0),
   [direccion] nvarchar(255),
   [telefono] decimal(18,0),
   [mail] nvarchar(255),
@@ -84,7 +84,7 @@ CREATE TABLE [AguanteMySql36].[Cliente] (
 
 CREATE TABLE [AguanteMySql36].[Medios_de_pago_venta] (
   [id_medio_pago] Int IDENTITY(1,1),
-  [tipo] nvarchar(50),
+  [tipo] nvarchar(2255), -- TODO! Checkear si el tipo de dato está bien
   [costo_transaccion] decimal(18,2),
   [descuento_medio] decimal(3,1),
   PRIMARY KEY ([id_medio_pago])
@@ -92,7 +92,7 @@ CREATE TABLE [AguanteMySql36].[Medios_de_pago_venta] (
 
 CREATE TABLE [AguanteMySql36].[Medio_envio] (
   [id] int IDENTITY(1,1),
-  [nombre_medio_envio] varchar,
+  [nombre_medio_envio] nvarchar(255),
   PRIMARY KEY ([id])
 );
 
@@ -131,12 +131,12 @@ CREATE TABLE [AguanteMySql36].[Venta] (
   [cliente_id] int,
   [envio_id] int,
   [id_medio_pago] Int,
-  [fecha_venta] DATETIME,
+  [fecha_venta] DATE,
   [medio_pago_costo] decimal(18,2),
   [medio_pago_descuento] decimal(18,2),
   [envio_costo] decimal(18,2),
   [canal_venta_costo] decimal(18,2),
-  [total] nvarchar(30),
+  [total] decimal(18,2),
   [canal_venta] int,
   PRIMARY KEY ([num_venta]),
   CONSTRAINT [FK_Venta.canal_venta]
@@ -154,16 +154,16 @@ CREATE TABLE [AguanteMySql36].[Venta] (
 );
 
 CREATE TABLE [AguanteMySql36].[Cupon] (
-  [cupon_codigo] INT,
-  [fecha_desde] DATETIME,
-  [fecha_hasta] DATETIME,
+  [cupon_codigo] nvarchar(255),
+  [fecha_desde] DATE,
+  [fecha_hasta] DATE,
   [tipo] nvarchar(50),
-  [valor] decimal(10,2),
+  [valor] decimal(18,2),
   PRIMARY KEY ([cupon_codigo])
 );
 
 CREATE TABLE [AguanteMySql36].[Cupon_x_venta] (
-  [cupon_codigo] Int,
+  [cupon_codigo] nvarchar(255),
   [num_venta] decimal(19,0),
   CONSTRAINT [FK_Cupon_x_venta.num_venta]
     FOREIGN KEY ([num_venta])
@@ -181,14 +181,13 @@ CREATE TABLE [AguanteMySql36].[Descuento_venta] (
 
 CREATE TABLE [AguanteMySql36].[Tipo_variante] (
   [tipo_variante_id] Int IDENTITY(1,1),
-  [descripcion] nvarchar(255),
+  [descripcion] nvarchar(50),
   PRIMARY KEY ([tipo_variante_id])
 );
 
 CREATE TABLE [AguanteMySql36].[variante] (
   [variante_id] int IDENTITY(1,1),
   [tipo_variante_id] Int,
-  [descripcion] nvarchar(255),
   PRIMARY KEY ([variante_id]),
   CONSTRAINT [FK_variante.tipo_variante_id]
     FOREIGN KEY ([tipo_variante_id])
@@ -259,7 +258,7 @@ CREATE TABLE [AguanteMySql36].[Proveedor] (
   [CUIT] nvarchar(50),
   [razon_social] nvarchar(50),
   [domicilio] nvarchar(50),
-  [telefono] nvarchar(50),
+  [telefono] nvarchar(50) null,
   [mail] nvarchar(50),
   [provincia_id] int,
   [localidad] nvarchar(255),
@@ -287,7 +286,7 @@ CREATE TABLE [AguanteMySql36].[Compra] (
 CREATE TABLE [AguanteMySql36].[Producto_por_compra] (
   [num_compra] decimal(19,0),
   [producto_variante_codigo] int,
-  [cantidad_comprada] decimal(18,2),
+  [cantidad_comprada] decimal(18,0),
   [precio_unitario] decimal(18,2),
   [total] decimal(18,2),
   PRIMARY KEY ([num_compra]),
@@ -302,7 +301,7 @@ CREATE TABLE [AguanteMySql36].[Producto_por_compra] (
 CREATE TABLE [AguanteMySql36].[Productos_por_Venta] (
   [num_venta] decimal(19,0),
   [producto_variante_codigo] int,
-  [cantidad_vendida] decimal(18,2),
+  [cantidad_vendida] decimal(18,0),
   [total] decimal(18,2),
   PRIMARY KEY ([num_venta]),
   CONSTRAINT [FK_Productos_por_Venta.producto_variante_codigo]
@@ -317,6 +316,7 @@ CREATE TABLE [AguanteMySql36].[Descuento_x_venta] (
   [id_descuento] Int IDENTITY(1,1),
   [num_venta] decimal(19,0),
   [importe_descuento] decimal(18,2),
+  [descuento_concepto] decimal(18,0),
   CONSTRAINT [FK_Descuento_x_venta.id_descuento]
     FOREIGN KEY ([id_descuento])
       REFERENCES [AguanteMySql36].[Descuento_venta]([id_concepto]),
@@ -326,7 +326,7 @@ CREATE TABLE [AguanteMySql36].[Descuento_x_venta] (
 );
 
 CREATE TABLE [AguanteMySql36].[Descuento_compra] (
-  [id_descuento] Int IDENTITY(1,1),
+  [id_descuento] decimal(19,0),
   [porcentaje] decimal(18,2),
   PRIMARY KEY ([id_descuento])
 );
