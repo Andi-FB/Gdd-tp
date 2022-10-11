@@ -18,10 +18,6 @@ IF OBJECT_ID ('AguanteMySql36.Descuento_x_compra') IS NOT NULL DROP TABLE Aguant
 IF OBJECT_ID ('AguanteMySql36.Descuento_x_venta') IS NOT NULL DROP TABLE AguanteMySql36.Descuento_x_venta;
 IF OBJECT_ID ('AguanteMySql36.Descuento_compra') IS NOT NULL DROP TABLE AguanteMySql36.Descuento_compra;
 IF OBJECT_ID ('AguanteMySql36.Descuento_venta') IS NOT NULL DROP TABLE AguanteMySql36.Descuento_venta;
-IF OBJECT_ID ('AguanteMySql36.Medios_de_pago') IS NOT NULL DROP TABLE AguanteMySql36.Medios_de_pago;
-IF OBJECT_ID ('AguanteMySql36.Producto_venta_por_compra') IS NOT NULL DROP TABLE AguanteMySql36.Producto_venta_por_compra;
-IF OBJECT_ID ('AguanteMySql36.Producto_venta_por_venta') IS NOT NULL DROP TABLE AguanteMySql36.Producto_venta_por_venta;
-IF OBJECT_ID ('AguanteMySql36.Variantes_por_Producto') IS NOT NULL DROP TABLE AguanteMySql36.Variantes_por_Producto;
 IF OBJECT_ID ('AguanteMySql36.variante') IS NOT NULL DROP TABLE AguanteMySql36.variante;
 IF OBJECT_ID ('AguanteMySql36.Cupon_x_venta') IS NOT NULL DROP TABLE AguanteMySql36.Cupon_x_venta;
 IF OBJECT_ID ('AguanteMySql36.Producto') IS NOT NULL DROP TABLE AguanteMySql36.Producto;
@@ -36,7 +32,6 @@ IF OBJECT_ID ('AguanteMySql36.Medio_envio') IS NOT NULL DROP TABLE AguanteMySql3
 IF OBJECT_ID ('AguanteMySql36.Medios_de_pago_venta') IS NOT NULL DROP TABLE AguanteMySql36.Medios_de_pago_venta;
 IF OBJECT_ID ('AguanteMySql36.Barrio') IS NOT NULL DROP TABLE AguanteMySql36.Barrio;
 IF OBJECT_ID ('AguanteMySql36.Categoria') IS NOT NULL DROP TABLE AguanteMySql36.Categoria;
-IF OBJECT_ID ('AguanteMySql36.Descuento_venta') IS NOT NULL DROP TABLE AguanteMySql36.Descuento_venta;
 IF OBJECT_ID ('AguanteMySql36.Marca') IS NOT NULL DROP TABLE AguanteMySql36.Marca;
 IF OBJECT_ID ('AguanteMySql36.Material') IS NOT NULL DROP TABLE AguanteMySql36.Material;
 IF OBJECT_ID ('AguanteMySql36.Medios_de_pago_compra') IS NOT NULL DROP TABLE AguanteMySql36.Medios_de_pago_compra;
