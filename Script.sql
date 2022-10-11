@@ -327,7 +327,7 @@ CREATE TABLE [AguanteMySql36].[Descuento_compra] (
 );
 
 CREATE TABLE [AguanteMySql36].[Descuento_x_compra] (
-  [id_descuento] Int,
+  [id_descuento] decimal(19,0),
   [num_compra] decimal(19,0),
   [descuento_aplicado] decimal(18,2),
   CONSTRAINT [FK_Descuento_x_compra.id_descuento]
@@ -337,3 +337,25 @@ CREATE TABLE [AguanteMySql36].[Descuento_x_compra] (
     FOREIGN KEY ([num_compra])
       REFERENCES [AguanteMySql36].[Compra]([num_compra])
 );
+
+GO
+
+CREATE PROCEDURE [AguanteMySql36].migrar_material
+AS 
+BEGIN
+	INSERT INTO [AguanteMySql36].material(nombre)
+	SELECT DISTINCT
+		PRODUCTO_MATERIAL as nombre
+	FROM gd_esquema.Maestra
+	WHERE PRODUCTO_MATERIAL is not null
+
+	IF @@ERROR != 0
+	PRINT('MATERIAL FAIL!')
+	ELSE
+	PRINT('MATERIAL OK!')
+END
+
+GO
+-- EXEC [AguanteMySql36].migrar_material
+
+
