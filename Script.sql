@@ -358,4 +358,47 @@ END
 GO
 -- EXEC [AguanteMySql36].migrar_material
 
+CREATE PROCEDURE [AguanteMySql36].migrar_provincias
+AS 
+BEGIN
+	INSERT INTO [AguanteMySql36].provincias(nombre)
+	SELECT
+	CLIENTE_PROVINCIA
+	from gd_esquema.Maestra
+	WHERE CLIENTE_PROVINCIA is not null 
+	UNION
+	SELECT
+	PROVEEDOR_PROVINCIA
+	from gd_esquema.Maestra
+	WHERE PROVEEDOR_PROVINCIA is not null 
+
+	IF @@ERROR != 0
+	PRINT('PROVINCIA FAIL!')
+	ELSE
+	PRINT('PROVINCIA OK!')
+END
+
+-- MATERIA, PROVICNIAS, MARCA
+GO
+
+
+CREATE PROCEDURE [AguanteMySql36].migrar_marca
+AS 
+BEGIN
+	INSERT INTO [AguanteMySql36].Marca(nombre)
+	SELECT DISTINCT
+	PRODUCTO_MARCA
+	from gd_esquema.Maestra
+	WHERE PRODUCTO_MARCA is not null 
+	ORDER BY PRODUCTO_MARCA
+
+	IF @@ERROR != 0
+	PRINT('MARCA FAIL!')
+	ELSE
+	PRINT('MARCA OK!')
+END
+
+GO
+
+-- TODO: Investigar como DROPEAR los stored procedures
 
