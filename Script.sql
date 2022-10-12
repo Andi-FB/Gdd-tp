@@ -400,5 +400,52 @@ END
 
 GO
 
+CREATE PROCEDURE [AguanteMySql36].migrar_cliente
+AS 
+BEGIN
+	INSERT INTO [AguanteMySql36].Cliente(nombre,
+										apellido,
+										dni, 
+										provincia,
+										codigo_postal, 
+										direccion, 
+										telefono,
+										mail, 
+										fecha_nacimiento, 
+										localidad)
+	SELECT DISTINCT
+	CLIENTE_NOMBRE,
+	CLIENTE_APELLIDO,
+	CLIENTE_DNI,
+	CLIENTE_PROVINCIA,
+	CLIENTE_CODIGO_POSTAL,
+	CLIENTE_DIRECCION,
+	CLIENTE_TELEFONO,
+	CLIENTE_MAIL,
+	CLIENTE_FECHA_NAC,
+	CLIENTE_LOCALIDAD
+	FROM gd_esquema.Maestra
+	WHERE	CLIENTE_NOMBRE is not null and
+			CLIENTE_APELLIDO is not null and
+			CLIENTE_DNI is not null and
+			CLIENTE_PROVINCIA is not null and
+			CLIENTE_CODIGO_POSTAL is not null and
+			CLIENTE_DIRECCION is not null and
+			CLIENTE_TELEFONO is not null and
+			CLIENTE_MAIL is not null and
+			CLIENTE_FECHA_NAC is not null and
+			CLIENTE_LOCALIDAD is not null 
+
+	IF @@ERROR != 0
+	PRINT('CLIENTE FAIL!')
+	ELSE
+	PRINT('CLIENTE OK!')
+END
+
+GO
+
+
 -- TODO: Investigar como DROPEAR los stored procedures
+
+
 
