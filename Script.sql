@@ -58,7 +58,7 @@ GO
 
 CREATE TABLE [AguanteMySql36].[Canal_venta] (
   [id] int IDENTITY(1,1),
-  [nombre] varchar,
+  [nombre] nvarchar(255),
   PRIMARY KEY ([id])
 );
 
@@ -79,7 +79,7 @@ CREATE TABLE [AguanteMySql36].[Cliente] (
 
 CREATE TABLE [AguanteMySql36].[Medios_de_pago_venta] (
   [id_medio_pago] Int IDENTITY(1,1),
-  [tipo] nvarchar(2255), -- TODO! Checkear si el tipo de dato está bien
+  [tipo] nvarchar(2255), -- TODO! Checkear si el tipo de dato estï¿½ bien
   [costo_transaccion] decimal(18,2),
   [descuento_medio] decimal(3,1),
   PRIMARY KEY ([id_medio_pago])
@@ -401,4 +401,93 @@ END
 GO
 
 -- TODO: Investigar como DROPEAR los stored procedures
+
+--Categoria
+
+GO
+
+CREATE PROCEDURE [AguanteMySql36].migrar_categoria
+AS 
+BEGIN
+	INSERT INTO [AguanteMySql36].Categoria(nombre)
+	SELECT DISTINCT
+		PRODUCTO_CATEGORIA as nombre
+	FROM gd_esquema.Maestra
+	WHERE PRODUCTO_MATERIAL is not null
+
+	IF @@ERROR != 0
+	PRINT('CATEGORIA FAIL!')
+	ELSE
+	PRINT('CATEGORIA OK!')
+END
+
+--Variante
+GO
+
+CREATE PROCEDURE [AguanteMySql36].migrar_tipo_variante
+AS 
+BEGIN
+	INSERT INTO [AguanteMySql36].Tipo_variante(descripcion)
+	SELECT DISTINCT
+		PRODUCTO_TIPO_VARIANTE as descripcion
+	FROM gd_esquema.Maestra
+	WHERE PRODUCTO_TIPO_VARIANTE is not null
+
+	IF @@ERROR != 0
+	PRINT('CATEGORIA FAIL!')
+	ELSE
+	PRINT('CATEGORIA OK!')
+END
+
+--Cupon
+
+
+GO
+
+CREATE PROCEDURE [AguanteMySql36].migrar_cupon
+AS 
+BEGIN
+
+	INSERT INTO [AguanteMySql36].Cupon(fecha_desde)
+	  SELECT DISTINCT
+		  PRODUCTO_CUPON_FECHA_DESDE as fecha_desde
+      WHERE PRODUCTO_CUPON_FECHA_DESDE is not null
+	INSERT INTO [AguanteMySql36].Cupon(fecha_hasta)
+  	SELECT DISTINCT
+	  	PRODUCTO_CUPON_FECHA_HASTA as fecha_hasta
+    	WHERE PRODUCTO_CUPON_FECHA_HASTA is not null 
+  INSERT INTO [AguanteMySql36].Cupon(tipo)
+	  SELECT DISTINCT
+	  	PRODUCTO_CUPON_TIPO as tipo
+       	WHERE PRODUCTO_CUPON_TIPO is fnot null
+  INSERT INTO [AguanteMySql36].Cupon(valor)
+	  SELECT DISTINCT
+	  	PRODUCTO_CUPON_VALOR as valor
+       	WHERE PRODUCTO_CUPON_VALOR is not null
+  
+	FROM gd_esquema.Maestra
+  
+	IF @@ERROR != 0
+	PRINT('CUPON FAIL!')
+	ELSE
+	PRINT('CUPON OK!')
+END
+
+-- Canal de venta 
+GO
+
+CREATE PROCEDURE [AguanteMySql36].migrar_canal_venta
+AS 
+BEGIN
+	INSERT INTO [AguanteMySql36].Canal_venta(nombre)
+	SELECT DISTINCT
+		VENTA_CANAL as nombre 
+	FROM gd_esquema.Maestra
+	WHERE VENTA_CANAL is not null
+
+	IF @@ERROR != 0
+	PRINT('CANAL DE VENTA FAIL!')
+	ELSE
+	PRINT('CANAL DE VENTA OK!')
+END
 
