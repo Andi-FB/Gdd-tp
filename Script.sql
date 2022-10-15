@@ -169,8 +169,8 @@ CREATE TABLE [AguanteMySql36].[Cupon_x_venta] (
 );
 
 CREATE TABLE [AguanteMySql36].[Descuento_venta] (
-  [id_concepto] Int IDENTITY(1,1),
-  [nombre] nvarchar(255),
+  [id_concepto] decimal(18,2),
+  [importe] decimal(18,0),
   PRIMARY KEY ([id_concepto])
 );
 
@@ -401,6 +401,8 @@ END
 GO
 
 -- TODO: Investigar como DROPEAR los stored procedures
+-- DROP PROCEDURE [<stored procedure name>];
+-- GO
 
 --Categoria
 
@@ -491,3 +493,100 @@ BEGIN
 	PRINT('CANAL DE VENTA OK!')
 END
 
+GO
+
+-- Medio_envio 
+GO
+
+CREATE PROCEDURE [AguanteMySql36].migrar_Medio_envio
+AS 
+BEGIN
+	INSERT INTO [AguanteMySql36].Medio_envio(nombre_medio_envio)
+	SELECT DISTINCT
+		VENTA_MEDIO_ENVIO as nombre_medio_envio 
+	FROM gd_esquema.Maestra
+	WHERE VENTA_MEDIO_ENVIO is not null
+
+	IF @@ERROR != 0
+	PRINT('Medio_envio FAIL!')
+	ELSE
+	PRINT('Medio_envio OK!')
+END
+GO
+
+-- Medios_de_pago_ventas
+GO
+
+CREATE PROCEDURE [AguanteMySql36].migrar_Medios_de_pago_venta
+AS 
+BEGIN
+	INSERT INTO [AguanteMySql36].Medios_de_pago_venta(tipo, costo_transaccion)
+	SELECT DISTINCT
+		VENTA_MEDIO_PAGO as tipo,
+    VENTA_MEDIO_PAGO_COSTO as costo_transaccion
+	FROM gd_esquema.Maestra
+	WHERE VENTA_MEDIO_PAGO is not null
+
+	IF @@ERROR != 0
+	PRINT('Medios_de_pago_venta FAIL!')
+	ELSE
+	PRINT('Medios_de_pago_venta OK!')
+END
+GO
+
+-- Medios_de_pago_compra
+GO
+CREATE PROCEDURE [AguanteMySql36].migrar_Medios_de_pago_compra
+AS 
+BEGIN
+	INSERT INTO [AguanteMySql36].Medios_de_pago_compra(tipo) -- , costo_transaccion
+	SELECT DISTINCT
+		COMPRA_MEDIO_PAGO as tipo,
+    --VENTA_MEDIO_PAGO_COSTO as costo_transaccion
+	FROM gd_esquema.Maestra
+	WHERE COMPRA_MEDIO_PAGO is not null
+
+	IF @@ERROR != 0
+	PRINT('Medios_de_pago_compra FAIL!')
+	ELSE
+	PRINT('Medios_de_pago_compra OK!')
+END
+GO
+
+-- Descuento_compra
+GO
+CREATE PROCEDURE [AguanteMySql36].migrar_Descuento_compra
+AS 
+BEGIN
+	INSERT INTO [AguanteMySql36].Descuento_compra(id_descuento, porcentaje) 
+	SELECT DISTINCT
+		DESCUENTO_COMPRA_CODIGO as id_descuento,
+    DESCUENTO_COMPRA_VALOR as porcentaje
+	FROM gd_esquema.Maestra
+	WHERE DESCUENTO_COMPRA_CODIGO is not null
+
+	IF @@ERROR != 0
+	PRINT('Descuento_compra FAIL!')
+	ELSE
+	PRINT('Descuento_compra OK!')
+END
+GO
+
+-- Descuento_venta
+GO
+CREATE PROCEDURE [AguanteMySql36].migrar_Descuento_venta
+AS 
+BEGIN
+	INSERT INTO [AguanteMySql36].Descuento_venta(id_concepto, valor) 
+	SELECT DISTINCT
+      VENTA_DESCUENTO_CONCEPTO as id_concepto,
+    	VENTA_DESCUENTO_IMPORTE as valor
+	FROM gd_esquema.Maestra
+	WHERE VENTA_DESCUENTO_CONCEPTO is not null
+
+	IF @@ERROR != 0
+	PRINT('Descuento_venta FAIL!')
+	ELSE
+	PRINT('Descuento_venta OK!')
+END
+GO
