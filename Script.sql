@@ -450,22 +450,25 @@ BEGIN
 
 	INSERT INTO [AguanteMySql36].Cupon(fecha_desde)
 	  SELECT DISTINCT
-		  PRODUCTO_CUPON_FECHA_DESDE as fecha_desde
-      WHERE PRODUCTO_CUPON_FECHA_DESDE is not null
+		  VENTA_CUPON_FECHA_DESDE as fecha_desde
+      	FROM gd_esquema.Maestra
+      WHERE VENTA_CUPON_FECHA_DESDE is not null
 	INSERT INTO [AguanteMySql36].Cupon(fecha_hasta)
   	SELECT DISTINCT
-	  	PRODUCTO_CUPON_FECHA_HASTA as fecha_hasta
-    	WHERE PRODUCTO_CUPON_FECHA_HASTA is not null 
+	  	VENTA_CUPON_FECHA_HASTA as fecha_hasta
+      	FROM gd_esquema.Maestra
+    	WHERE VENTA_CUPON_FECHA_HASTA is not null 
   INSERT INTO [AguanteMySql36].Cupon(tipo)
 	  SELECT DISTINCT
-	  	PRODUCTO_CUPON_TIPO as tipo
-       	WHERE PRODUCTO_CUPON_TIPO is fnot null
+	  	VENTA_CUPON_TIPO as tipo
+      	FROM gd_esquema.Maestra
+       	WHERE VENTA_CUPON_TIPO is not null
   INSERT INTO [AguanteMySql36].Cupon(valor)
 	  SELECT DISTINCT
-	  	PRODUCTO_CUPON_VALOR as valor
-       	WHERE PRODUCTO_CUPON_VALOR is not null
-  
-	FROM gd_esquema.Maestra
+	  	VENTA_CUPON_VALOR as valor
+      	FROM gd_esquema.Maestra
+       	WHERE VENTA_CUPON_VALOR is not null
+
   
 	IF @@ERROR != 0
 	PRINT('CUPON FAIL!')
