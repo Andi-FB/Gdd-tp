@@ -541,7 +541,7 @@ AS
 BEGIN
 	INSERT INTO [AguanteMySql36].Medios_de_pago_compra(tipo) -- , costo_transaccion
 	SELECT DISTINCT
-		COMPRA_MEDIO_PAGO as tipo,
+		COMPRA_MEDIO_PAGO as tipo
     --VENTA_MEDIO_PAGO_COSTO as costo_transaccion
 	FROM gd_esquema.Maestra
 	WHERE COMPRA_MEDIO_PAGO is not null
