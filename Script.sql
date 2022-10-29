@@ -330,12 +330,13 @@ CREATE TABLE [AguanteMySql36].[Compra] (
 
 
 CREATE TABLE [AguanteMySql36].[Producto_por_compra] (
+  [producto_por_compra_id] int IDENTITY(1,1),
   [num_compra] decimal(19,0),
   [producto_variante_id] int,
   [cantidad_comprada] decimal(18,0),
   [precio_unitario] decimal(18,2),
   [total] decimal(18,2),
-  PRIMARY KEY ([num_compra]),
+  PRIMARY KEY ([producto_por_compra_id]),
   CONSTRAINT [FK_Producto_por_compra.producto_variante_id]
     FOREIGN KEY ([producto_variante_id])
       REFERENCES [AguanteMySql36].[producto_variante]([producto_variante_id]),
@@ -915,6 +916,41 @@ BEGIN
 		PRINT('PRODUCTO_VARIANTE OK!')
 END
 
+GO
+CREATE PROCEDURE [AguanteMySql36].migrar_producto_por_compra
+AS
+BEGIN
+	INSERT INTO AguanteMySql36.Producto_por_compra(num_compra,producto_variante_id,cantidad_comprada,precio_unitario,total)
+	SELECT DISTINCT
+	maestra.COMPRA_NUMERO,
+	prod_var.producto_variante_id,
+	maestra.COMPRA_PRODUCTO_CANTIDAD,
+	maestra.COMPRA_PRODUCTO_PRECIO,
+	maestra.COMPRA_TOTAL
+	FROM gd_esquema.Maestra maestra
+	JOIN [AguanteMySql36].Producto prod
+	ON prod.producto_id = maestra.PRODUCTO_CODIGO
+	JOIN [AguanteMySql36].Modelo mo
+	ON mo.descripcion = maestra.PRODUCTO_VARIANTE
+	JOIN [AguanteMySql36].Tipo_variante tipo_var
+	ON tipo_var.descripcion = maestra.PRODUCTO_TIPO_VARIANTE
+	JOIN [AguanteMySql36].variante va
+	ON va.tipo_variante_id = tipo_var.tipo_variante_id AND
+	   va.modelo_id = mo.modelo_id  
+	JOIN [AguanteMySql36].producto_variante prod_var
+	ON va.variante_id = prod_var.variante_id AND
+	prod_var.producto_variante_codigo = maestra.PRODUCTO_VARIANTE_CODIGO AND
+	prod_var.producto_id = maestra.PRODUCTO_CODIGO AND
+	prod_var.stock = maestra.COMPRA_PRODUCTO_CANTIDAD AND 
+	prod_var.precio_unitario = maestra.COMPRA_PRODUCTO_PRECIO
+
+	IF @@ERROR != 0
+		PRINT('PRODUCTO_POR_COMPRA FAIL!')
+	ELSE
+		PRINT('PRODUCTO_POR_COMPRA  OK!')
+END
+
+
 SELECT DISTINCT
 	PRODUCTO_CODIGO,
 	PRODUCTO_VARIANTE_CODIGO,
@@ -974,10 +1010,5 @@ GO
 EXEC [AguanteMySql36].migrar_descuento_x_compra
 GO
 EXEC [AguanteMySql36].migrar_producto_variante
-
-
-
-
-
-
-
+GO
+EXEC [AguanteMySql36].migrar_producto_por_compra
