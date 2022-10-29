@@ -275,12 +275,13 @@ CREATE TABLE [AguanteMySql36].[Producto] (
 
 
 CREATE TABLE [AguanteMySql36].[producto_variante] (
+  [producto_variante_id] int IDENTITY(1,1),
   [producto_variante_codigo] nvarchar(50),
   [producto_id] nvarchar(50),
   [variante_id] int,
-  [precio_unitario] decimal(18,0),
+  [precio_unitario] decimal(18,2),
   [stock] int,
-  PRIMARY KEY ([producto_variante_codigo]),
+  PRIMARY KEY ([producto_variante_id]),
   CONSTRAINT [FK_producto_variante.variante_id]
     FOREIGN KEY ([variante_id])
       REFERENCES [AguanteMySql36].[variante]([variante_id]),
@@ -330,14 +331,14 @@ CREATE TABLE [AguanteMySql36].[Compra] (
 
 CREATE TABLE [AguanteMySql36].[Producto_por_compra] (
   [num_compra] decimal(19,0),
-  [producto_variante_codigo] nvarchar(50),
+  [producto_variante_id] int,
   [cantidad_comprada] decimal(18,0),
   [precio_unitario] decimal(18,2),
   [total] decimal(18,2),
   PRIMARY KEY ([num_compra]),
-  CONSTRAINT [FK_Producto_por_compra.producto_variante_codigo]
-    FOREIGN KEY ([producto_variante_codigo])
-      REFERENCES [AguanteMySql36].[producto_variante]([producto_variante_codigo]),
+  CONSTRAINT [FK_Producto_por_compra.producto_variante_id]
+    FOREIGN KEY ([producto_variante_id])
+      REFERENCES [AguanteMySql36].[producto_variante]([producto_variante_id]),
   CONSTRAINT [FK_Producto_por_compra.num_compra]
     FOREIGN KEY ([num_compra])
       REFERENCES [AguanteMySql36].[Compra]([num_compra])
@@ -346,13 +347,13 @@ CREATE TABLE [AguanteMySql36].[Producto_por_compra] (
 
 CREATE TABLE [AguanteMySql36].[Productos_por_Venta] (
   [num_venta] decimal(19,0),
-  [producto_variante_codigo] nvarchar(50),
+  [producto_variante_id] int,
   [cantidad_vendida] decimal(18,0),
   [total] decimal(18,2),
   PRIMARY KEY ([num_venta]),
-  CONSTRAINT [FK_Productos_por_Venta.producto_variante_codigo]
-    FOREIGN KEY ([producto_variante_codigo])
-      REFERENCES [AguanteMySql36].[producto_variante]([producto_variante_codigo]),
+  CONSTRAINT [FK_Productos_por_Venta.producto_variante_id]
+    FOREIGN KEY ([producto_variante_id])
+      REFERENCES [AguanteMySql36].[producto_variante]([producto_variante_id]),
   CONSTRAINT [FK_Productos_por_Venta.num_venta]
     FOREIGN KEY ([num_venta])
       REFERENCES [AguanteMySql36].[Venta]([num_venta])
@@ -884,6 +885,36 @@ BEGIN
 		PRINT('DESCUENTO_X_COMPRA OK!')
 END
 
+GO
+CREATE PROCEDURE [AguanteMySql36].migrar_producto_variante
+AS
+BEGIN
+	INSERT INTO AguanteMySql36.producto_variante(producto_variante_codigo,producto_id,variante_id,precio_unitario,stock)
+	SELECT DISTINCT
+	maestra.PRODUCTO_VARIANTE_CODIGO,
+	prod.producto_id,
+	va.variante_id,
+	maestra.COMPRA_PRODUCTO_PRECIO,
+	maestra.COMPRA_PRODUCTO_CANTIDAD
+	FROM gd_esquema.Maestra maestra
+	JOIN [AguanteMySql36].Producto prod
+	ON prod.producto_id = maestra.PRODUCTO_CODIGO
+	JOIN [AguanteMySql36].Modelo mo
+	ON mo.descripcion = maestra.PRODUCTO_VARIANTE
+	JOIN [AguanteMySql36].Tipo_variante tipo_var
+	ON tipo_var.descripcion = maestra.PRODUCTO_TIPO_VARIANTE
+	JOIN [AguanteMySql36].variante va
+	ON va.tipo_variante_id = tipo_var.tipo_variante_id AND
+	   va.modelo_id = mo.modelo_id  
+
+
+
+	IF @@ERROR != 0
+		PRINT('PRODUCTO_VARIANTE FAIL!')
+	ELSE
+		PRINT('PRODUCTO_VARIANTE OK!')
+END
+
 SELECT DISTINCT
 	PRODUCTO_CODIGO,
 	PRODUCTO_VARIANTE_CODIGO,
@@ -941,8 +972,8 @@ GO
 EXEC [AguanteMySql36].migrar_compra
 GO
 EXEC [AguanteMySql36].migrar_descuento_x_compra
-go
-
+GO
+EXEC [AguanteMySql36].migrar_producto_variante
 
 
 
