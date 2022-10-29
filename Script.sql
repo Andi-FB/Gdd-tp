@@ -55,7 +55,7 @@ IF EXISTS(	select
 	BEGIN
 	
 	
-	PRINT 'Existen procedures de una ejecución pasada'
+	PRINT 'Existen procedures de una ejecuciï¿½n pasada'
 	PRINT 'Se procede a borrarlos...'
 
 	DECLARE @sql NVARCHAR(MAX) = N'';
@@ -86,7 +86,7 @@ BEGIN
 
 END
 GO
-CREATE SCHEMA AguanteMySql36;
+CREATE SCHEMA [AguanteMySql36];
 GO
 
 
@@ -297,15 +297,18 @@ CREATE TABLE [AguanteMySql36].[Medios_de_pago_compra] (
 
 CREATE TABLE [AguanteMySql36].[Proveedor] (
   [id_proveedor] int IDENTITY(1,1),
+  [provincia_id] int,
   [CUIT] nvarchar(50),
   [razon_social] nvarchar(50),
   [domicilio] nvarchar(50),
   [telefono] nvarchar(50) null,
   [mail] nvarchar(50),
-  [provincia_id] int,
   [localidad] nvarchar(255),
   [codigo_postal] decimal(18,0),
-  PRIMARY KEY ([id_proveedor])
+  PRIMARY KEY ([id_proveedor]),
+  CONSTRAINT [FK_proveedor.provincia_id]
+  FOREIGN KEY ([provincia_id])
+  REFERENCES [AguanteMySql36].[Provincias]([id])
 );
 
 CREATE TABLE [AguanteMySql36].[Compra] (
@@ -314,7 +317,7 @@ CREATE TABLE [AguanteMySql36].[Compra] (
   [id_medio_pago] int,
   [fecha] DATE,
   [total] decimal(18,2),
-  [medio_pago_costo] decimal(18,2),
+  [medio_pago_costo] nvarchar(255),
   PRIMARY KEY ([num_compra]),
   CONSTRAINT [FK_Compra.id_medio_pago]
     FOREIGN KEY ([id_medio_pago])
@@ -778,6 +781,30 @@ BEGIN
 
 END
 
+GO
+
+CREATE PROCEDURE [AguanteMySql36].migrar_proveedor
+AS
+BEGIN
+	INSERT INTO AguanteMySql36.Proveedor(CUIT,razon_social,domicilio,mail,provincia_id,localidad,codigo_postal)
+	SELECT DISTINCT
+	maestra.PROVEEDOR_CUIT as CUIT,
+	maestra.PROVEEDOR_RAZON_SOCIAL as razon_social,
+	maestra.PROVEEDOR_DOMICILIO as domicilio,
+	maestra.PROVEEDOR_MAIL as mail,
+	prov.id as prov,
+	maestra.PROVEEDOR_LOCALIDAD as localidad,
+	maestra.PROVEEDOR_CODIGO_POSTAL as codigo_postal
+	FROM gd_esquema.Maestra maestra
+	JOIN [AguanteMySql36].provincias prov
+	ON prov.nombre = maestra.PROVEEDOR_PROVINCIA
+
+	IF @@ERROR != 0
+		PRINT('PROVEEDOR FAIL!')
+	ELSE
+		PRINT('PROVEEDOR OK!')
+
+END
 
 GO
 
@@ -808,7 +835,54 @@ BEGIN
 		PRINT('PRODUCTO OK!')
 
 END
+go
 
+CREATE PROCEDURE [AguanteMySql36].migrar_compra
+AS
+BEGIN
+	INSERT INTO AguanteMySql36.Compra(num_compra,proveedor_id,id_medio_pago,fecha,total,medio_pago_costo)
+	SELECT DISTINCT
+	maestra.COMPRA_NUMERO as num_compra,
+	prov.id_proveedor as proveedor,
+	mp.id_medio_pago as medio_pago,
+	maestra.COMPRA_FECHA as fecha,
+	maestra.COMPRA_TOTAL AS total_compra,
+	maestra.COMPRA_MEDIO_PAGO AS medio_pago
+	FROM gd_esquema.Maestra maestra
+	JOIN [AguanteMySql36].Proveedor prov
+	ON prov.CUIT = maestra.PROVEEDOR_CUIT
+	JOIN [AguanteMySql36].Medios_de_pago_compra mp
+	ON mp.descripcion = maestra.COMPRA_MEDIO_PAGO
+
+
+			IF @@ERROR != 0
+		PRINT('COMPRA FAIL!')
+	ELSE
+		PRINT('COMPRA OK!')
+
+END
+
+GO
+
+CREATE PROCEDURE [AguanteMySql36].migrar_descuento_x_compra
+AS
+BEGIN
+	INSERT INTO AguanteMySql36.Descuento_x_compra(id_descuento, num_compra,descuento_aplicado)
+	SELECT DISTINCT
+	maestra.DESCUENTO_COMPRA_CODIGO as id_descuento,
+	comp.num_compra as num_compra,
+	maestra.DESCUENTO_COMPRA_VALOR as valor_descuento
+	FROM gd_esquema.Maestra maestra
+	JOIN [AguanteMySql36].Compra comp
+	ON comp.num_compra = maestra.COMPRA_NUMERO
+	JOIN [AguanteMySql36].Descuento_compra dc
+	ON dc.id_descuento = maestra.DESCUENTO_COMPRA_CODIGO
+
+	IF @@ERROR != 0
+		PRINT('DESCUENTO_X_COMPRA FAIL!')
+	ELSE
+		PRINT('DESCUENTO_X_COMPRA OK!')
+END
 
 SELECT DISTINCT
 	PRODUCTO_CODIGO,
@@ -861,7 +935,13 @@ GO
 EXEC [AguanteMySql36].migrar_envio
 GO
 EXEC AguanteMySql36.migrar_producto
-
+go
+EXEC [AguanteMySql36].migrar_proveedor
+GO
+EXEC [AguanteMySql36].migrar_compra
+GO
+EXEC [AguanteMySql36].migrar_descuento_x_compra
+go
 
 
 
