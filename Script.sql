@@ -42,6 +42,39 @@ IF OBJECT_ID ('AguanteMySql36.producto_variante') IS NOT NULL DROP TABLE Aguante
 IF OBJECT_ID ('AguanteMySql36.Productos_por_Venta') IS NOT NULL DROP TABLE AguanteMySql36.Productos_por_Venta;
 GO
 
+
+
+-- Dropeo de Stored Procedures
+
+IF EXISTS(	select
+		*
+	from sys.sysobjects
+	where xtype = 'P' and name like '%migrar_%'
+	)
+	BEGIN
+	
+	
+	PRINT 'Existen procedures de una ejecución pasada'
+	PRINT 'Se procede a borrarlos...'
+
+	DECLARE @sql NVARCHAR(MAX) = N'';
+
+	SELECT @sql += N'
+	DROP PROCEDURE [AguanteMySql36].'
+	  + QUOTENAME(name) + ';'
+	FROM sys.sysobjects
+	WHERE xtype = 'P' and name like '%migrar_%'
+
+	--PRINT @sql;
+
+	EXEC sp_executesql @sql
+
+	
+	END
+
+GO
+
+
 -- DROP SCHEMA
 
 IF EXISTS(
@@ -62,8 +95,9 @@ CREATE TABLE [AguanteMySql36].[Canal_venta] (
   PRIMARY KEY ([id])
 );
 
+
 CREATE TABLE [AguanteMySql36].[Cliente] (
-  [cliente_id] INT,
+  [cliente_id] INT IDENTITY(1,1),
   [nombre] nvarchar(255),
   [apellido] nvarchar(255),
   [dni] decimal(18,0),
@@ -169,7 +203,8 @@ CREATE TABLE [AguanteMySql36].[Cupon_x_venta] (
 );
 
 CREATE TABLE [AguanteMySql36].[Descuento_venta] (
-  [id_concepto] decimal(18,2),
+	[id_concepto] int identity(1,1), 
+  [medio_pago] nvarchar(255),
   [importe] decimal(18,0),
   PRIMARY KEY ([id_concepto])
 );
@@ -181,7 +216,7 @@ CREATE TABLE [AguanteMySql36].[Tipo_variante] (
 );
 
 CREATE TABLE [AguanteMySql36].[variante] (
-  [variante_id] int IDENTITY(1,1),
+  [variante_id] nvarchar(50),
   [tipo_variante_id] Int,
   PRIMARY KEY ([variante_id]),
   CONSTRAINT [FK_variante.tipo_variante_id]
@@ -226,10 +261,11 @@ CREATE TABLE [AguanteMySql36].[Producto] (
       REFERENCES [AguanteMySql36].[Marca]([marca_id])
 );
 
+
 CREATE TABLE [AguanteMySql36].[producto_variante] (
-  [producto_variante_codigo] int IDENTITY(1,1),
+  [producto_variante_codigo] nvarchar(50),
   [producto_id] nvarchar(50),
-  [variante_id] Int,
+  [variante_id] nvarchar(50),
   [precio_unitario] decimal(18,0),
   [stock] int,
   PRIMARY KEY ([producto_variante_codigo]),
@@ -242,9 +278,8 @@ CREATE TABLE [AguanteMySql36].[producto_variante] (
 );
 
 CREATE TABLE [AguanteMySql36].[Medios_de_pago_compra] (
-  [id_medio_pago] nvarchar(255),
-  [tipo] nvarchar(50),
-  [costo_transaccion] decimal(18,2),
+  [id_medio_pago] int IDENTITY(1,1),
+  descripcion nvarchar(255),
   PRIMARY KEY ([id_medio_pago])
 );
 
@@ -264,7 +299,7 @@ CREATE TABLE [AguanteMySql36].[Proveedor] (
 CREATE TABLE [AguanteMySql36].[Compra] (
   [num_compra] decimal(19,0),
   [proveedor_id] int,
-  [id_medio_pago] nvarchar(255),
+  [id_medio_pago] int,
   [fecha] DATE,
   [total] decimal(18,2),
   [medio_pago_costo] decimal(18,2),
@@ -280,7 +315,7 @@ CREATE TABLE [AguanteMySql36].[Compra] (
 
 CREATE TABLE [AguanteMySql36].[Producto_por_compra] (
   [num_compra] decimal(19,0),
-  [producto_variante_codigo] int,
+  [producto_variante_codigo] nvarchar(50),
   [cantidad_comprada] decimal(18,0),
   [precio_unitario] decimal(18,2),
   [total] decimal(18,2),
@@ -293,9 +328,10 @@ CREATE TABLE [AguanteMySql36].[Producto_por_compra] (
       REFERENCES [AguanteMySql36].[Compra]([num_compra])
 );
 
+
 CREATE TABLE [AguanteMySql36].[Productos_por_Venta] (
   [num_venta] decimal(19,0),
-  [producto_variante_codigo] int,
+  [producto_variante_codigo] nvarchar(50),
   [cantidad_vendida] decimal(18,0),
   [total] decimal(18,2),
   PRIMARY KEY ([num_venta]),
@@ -308,7 +344,7 @@ CREATE TABLE [AguanteMySql36].[Productos_por_Venta] (
 );
 
 CREATE TABLE [AguanteMySql36].[Descuento_x_venta] (
-  [id_descuento] Int IDENTITY(1,1),
+  [id_descuento] nvarchar(255),
   [num_venta] decimal(19,0),
   [importe_descuento] decimal(18,2),
   [descuento_concepto] decimal(18,0),
@@ -495,27 +531,20 @@ CREATE PROCEDURE [AguanteMySql36].migrar_cupon
 AS 
 BEGIN
 
-	INSERT INTO [AguanteMySql36].Cupon(fecha_desde)
+	INSERT INTO [AguanteMySql36].Cupon(cupon_codigo,fecha_desde, fecha_hasta,tipo,valor)
 	  SELECT DISTINCT
-		  VENTA_CUPON_FECHA_DESDE as fecha_desde
+		  VENTA_CUPON_CODIGO as cupon_codigo,
+		  VENTA_CUPON_FECHA_DESDE as fecha_desde,
+		  VENTA_CUPON_FECHA_HASTA as fecha_hasta,
+		  VENTA_CUPON_TIPO as tipo,
+		  VENTA_CUPON_VALOR as valor
       	FROM gd_esquema.Maestra
       WHERE VENTA_CUPON_FECHA_DESDE is not null
-	INSERT INTO [AguanteMySql36].Cupon(fecha_hasta)
-  	SELECT DISTINCT
-	  	VENTA_CUPON_FECHA_HASTA as fecha_hasta
-      	FROM gd_esquema.Maestra
-    	WHERE VENTA_CUPON_FECHA_HASTA is not null 
-  INSERT INTO [AguanteMySql36].Cupon(tipo)
-	  SELECT DISTINCT
-	  	VENTA_CUPON_TIPO as tipo
-      	FROM gd_esquema.Maestra
-       	WHERE VENTA_CUPON_TIPO is not null
-  INSERT INTO [AguanteMySql36].Cupon(valor)
-	  SELECT DISTINCT
-	  	VENTA_CUPON_VALOR as valor
-      	FROM gd_esquema.Maestra
-       	WHERE VENTA_CUPON_VALOR is not null
-
+	  AND VENTA_CUPON_VALOR is not null
+	  AND VENTA_CUPON_FECHA_HASTA is not null 
+	  AND VENTA_CUPON_TIPO is not null
+	  AND VENTA_CUPON_CODIGO is not null
+	  
   
 	IF @@ERROR != 0
 	PRINT('CUPON FAIL!')
@@ -587,9 +616,9 @@ GO
 CREATE PROCEDURE [AguanteMySql36].migrar_Medios_de_pago_compra
 AS 
 BEGIN
-	INSERT INTO [AguanteMySql36].Medios_de_pago_compra(tipo) -- , costo_transaccion
+	INSERT INTO [AguanteMySql36].Medios_de_pago_compra(descripcion) -- , costo_transaccion
 	SELECT DISTINCT
-		COMPRA_MEDIO_PAGO as tipo
+		COMPRA_MEDIO_PAGO as descripcion
     --VENTA_MEDIO_PAGO_COSTO as costo_transaccion
 	FROM gd_esquema.Maestra
 	WHERE COMPRA_MEDIO_PAGO is not null
@@ -625,10 +654,10 @@ GO
 CREATE PROCEDURE [AguanteMySql36].migrar_Descuento_venta
 AS 
 BEGIN
-	INSERT INTO [AguanteMySql36].Descuento_venta(id_concepto, valor) 
+	INSERT INTO [AguanteMySql36].Descuento_venta(medio_pago, importe) 
 	SELECT DISTINCT
-      VENTA_DESCUENTO_CONCEPTO as id_concepto,
-    	VENTA_DESCUENTO_IMPORTE as valor
+      VENTA_DESCUENTO_CONCEPTO as medio_pago,
+    	VENTA_DESCUENTO_IMPORTE as importe
 	FROM gd_esquema.Maestra
 	WHERE VENTA_DESCUENTO_CONCEPTO is not null
 
@@ -639,30 +668,60 @@ BEGIN
 END
 GO
 
-GO
-CREATE PROCEDURE [AguanteMySql36].migrar_cupon
+
+CREATE PROCEDURE [AguanteMySql36].migrar_variante
 AS 
 BEGIN
+
 	
-	INSERT INTO [AguanteMySql36].Cupon(cupon_codigo, fecha_desde, fecha_hasta, valor, tipo)
-	SELECT DISTINCT
-		VENTA_CUPON_CODIGO,
-		VENTA_CUPON_FECHA_DESDE,
-		VENTA_CUPON_FECHA_HASTA,
-		VENTA_CUPON_VALOR,
-		VENTA_CUPON_TIPO
-	FROM gd_esquema.Maestra
-	WHERE VENTA_CUPON_CODIGO is not null
-
 	IF @@ERROR != 0
-		PRINT('Cupon FAIL!')
+		PRINT('variante FAIL!')
 	ELSE
-		PRINT('Cupon OK!')
-
+		PRINT('variante OK!')
 END
 
+SELECT DISTINCT
+	PRODUCTO_CODIGO,
+	PRODUCTO_VARIANTE_CODIGO,
+	PRODUCTO_VARIANTE,
+	PRODUCTO_TIPO_VARIANTE,
+	t.tipo_variante_id
+FROM gd_esquema.Maestra m
+JOIN [AguanteMySql36].Tipo_variante t
+ON t.descripcion = m.PRODUCTO_TIPO_VARIANTE
+WHERE PRODUCTO_TIPO_VARIANTE is not null
+ORDER BY PRODUCTO_VARIANTE_CODIGO
 
-
+GO
+EXEC AguanteMySql36.migrar_canal_venta
+GO
+EXEC AguanteMySql36.migrar_categoria
+GO
+EXEC AguanteMySql36.migrar_cliente
+GO
+EXEC AguanteMySql36.migrar_cupon
+GO
+EXEC AguanteMySql36.migrar_Descuento_compra
+GO
+EXEC AguanteMySql36.migrar_Descuento_venta
+GO
+EXEC AguanteMySql36.migrar_marca
+GO
+EXEC AguanteMySql36.migrar_material
+GO
+EXEC AguanteMySql36.migrar_Medio_envio
+GO
+EXEC AguanteMySql36.migrar_Medios_de_pago_compra
+GO
+EXEC AguanteMySql36.migrar_Medios_de_pago_venta
+GO
+EXEC AguanteMySql36.migrar_provincias
+GO
+EXEC AguanteMySql36.migrar_tipo_variante
+GO
+EXEC AguanteMySql36.migrar_variante
+GO
+ 
 
 
 
