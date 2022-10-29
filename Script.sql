@@ -132,7 +132,7 @@ CREATE TABLE [AguanteMySql36].[provincias] (
 );
 
 CREATE TABLE [AguanteMySql36].[Barrio] (
-  [codigo_postal] int,
+  [codigo_postal] DECIMAL(18,0),
   [provincia_id] int,
   [nombre] varchar,
   PRIMARY KEY ([codigo_postal]),
@@ -143,7 +143,7 @@ CREATE TABLE [AguanteMySql36].[Barrio] (
 
 CREATE TABLE [AguanteMySql36].[Envio] (
   [envio_id] int IDENTITY(1,1),
-  [codigo_postal] INT,
+  [codigo_postal] DECIMAL(18,0),
   [medio_envio_id] int,
   [precio_envio] decimal(18,2),
   PRIMARY KEY ([envio_id]),
@@ -344,10 +344,11 @@ CREATE TABLE [AguanteMySql36].[Productos_por_Venta] (
 );
 
 CREATE TABLE [AguanteMySql36].[Descuento_x_venta] (
-  [id_descuento] nvarchar(255),
+  [id_descuento] int,
   [num_venta] decimal(19,0),
   [importe_descuento] decimal(18,2),
   [descuento_concepto] decimal(18,0),
+  PRIMARY KEY([id_descuento],[num_venta]),
   CONSTRAINT [FK_Descuento_x_venta.id_descuento]
     FOREIGN KEY ([id_descuento])
       REFERENCES [AguanteMySql36].[Descuento_venta]([id_concepto]),
@@ -680,6 +681,34 @@ BEGIN
 		PRINT('variante OK!')
 END
 
+GO
+
+CREATE PROCEDURE [AguanteMySql36].migrar_barrio
+AS
+BEGIN
+	INSERT INTO [AguanteMySql36].Barrio(provincia_id, codigo_postal, nombre)
+	SELECT DISTINCT
+		p.id,
+		CLIENTE_CODIGO_POSTAL,
+		CLIENTE_LOCALIDAD
+	FROM gd_esquema.Maestra m
+	JOIN [AguanteMySql36].provincias p
+	ON p.nombre = m.CLIENTE_PROVINCIA
+	WHERE VENTA_CODIGO IS NOT NULL
+		AND VENTA_MEDIO_ENVIO IS NOT NULL
+		AND VENTA_ENVIO_PRECIO IS NOT NULL
+		AND CLIENTE_PROVINCIA IS NOT NULL
+		AND CLIENTE_CODIGO_POSTAL IS NOT NULL
+		AND CLIENTE_LOCALIDAD IS NOT NULL
+
+END
+
+
+
+
+
+
+
 SELECT DISTINCT
 	PRODUCTO_CODIGO,
 	PRODUCTO_VARIANTE_CODIGO,
@@ -691,6 +720,9 @@ JOIN [AguanteMySql36].Tipo_variante t
 ON t.descripcion = m.PRODUCTO_TIPO_VARIANTE
 WHERE PRODUCTO_TIPO_VARIANTE is not null
 ORDER BY PRODUCTO_VARIANTE_CODIGO
+
+
+
 
 GO
 EXEC AguanteMySql36.migrar_canal_venta
@@ -720,6 +752,8 @@ GO
 EXEC AguanteMySql36.migrar_tipo_variante
 GO
 EXEC AguanteMySql36.migrar_variante
+GO
+EXEC AguanteMySql36.migrar_barrio
 GO
  
 
