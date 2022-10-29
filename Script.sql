@@ -18,6 +18,7 @@ IF OBJECT_ID ('AguanteMySql36.Descuento_x_compra') IS NOT NULL DROP TABLE Aguant
 IF OBJECT_ID ('AguanteMySql36.Descuento_x_venta') IS NOT NULL DROP TABLE AguanteMySql36.Descuento_x_venta;
 IF OBJECT_ID ('AguanteMySql36.Descuento_compra') IS NOT NULL DROP TABLE AguanteMySql36.Descuento_compra;
 IF OBJECT_ID ('AguanteMySql36.Descuento_venta') IS NOT NULL DROP TABLE AguanteMySql36.Descuento_venta;
+IF OBJECT_ID ('AguanteMySql36.Modelo') IS NOT NULL DROP TABLE AguanteMySql36.Modelo;
 IF OBJECT_ID ('AguanteMySql36.variante') IS NOT NULL DROP TABLE AguanteMySql36.variante;
 IF OBJECT_ID ('AguanteMySql36.Cupon_x_venta') IS NOT NULL DROP TABLE AguanteMySql36.Cupon_x_venta;
 IF OBJECT_ID ('AguanteMySql36.Producto') IS NOT NULL DROP TABLE AguanteMySql36.Producto;
@@ -216,13 +217,23 @@ CREATE TABLE [AguanteMySql36].[Tipo_variante] (
   PRIMARY KEY ([tipo_variante_id])
 );
 
+CREATE TABLE [AguanteMySql36].[Modelo] (
+  [modelo_id] Int IDENTITY(1,1),
+  [descripcion] nvarchar(50),
+  PRIMARY KEY ([modelo_id])
+);
+
 CREATE TABLE [AguanteMySql36].[variante] (
-  [variante_id] nvarchar(50),
+  [variante_id] int identity(1,1),
   [tipo_variante_id] Int,
+  [modelo_id] int,
   PRIMARY KEY ([variante_id]),
   CONSTRAINT [FK_variante.tipo_variante_id]
     FOREIGN KEY ([tipo_variante_id])
-      REFERENCES [AguanteMySql36].[Tipo_variante]([tipo_variante_id])
+      REFERENCES [AguanteMySql36].[Tipo_variante]([tipo_variante_id]),
+  CONSTRAINT [FK_variante.modelo_id]
+    FOREIGN KEY ([modelo_id])
+      REFERENCES [AguanteMySql36].[Modelo]([modelo_id])
 );
 
 CREATE TABLE [AguanteMySql36].[material] (
@@ -266,7 +277,7 @@ CREATE TABLE [AguanteMySql36].[Producto] (
 CREATE TABLE [AguanteMySql36].[producto_variante] (
   [producto_variante_codigo] nvarchar(50),
   [producto_id] nvarchar(50),
-  [variante_id] nvarchar(50),
+  [variante_id] int,
   [precio_unitario] decimal(18,0),
   [stock] int,
   PRIMARY KEY ([producto_variante_codigo]),
@@ -674,10 +685,40 @@ END
 GO
 
 
+CREATE PROCEDURE [AguanteMySql36].migrar_modelo
+AS 
+BEGIN
+
+	INSERT INTO AguanteMySql36.Modelo(descripcion)
+	select distinct
+		PRODUCTO_VARIANTE
+	from gd_esquema.Maestra m
+	WHERE PRODUCTO_VARIANTE is not null
+	
+		IF @@ERROR != 0
+		PRINT('modelo FAIL!')
+	ELSE
+		PRINT('modelo OK!')
+
+END
+GO
+
 CREATE PROCEDURE [AguanteMySql36].migrar_variante
 AS 
 BEGIN
 
+	select * from AguanteMySql36.Tipo_variante
+
+	insert into AguanteMySql36.variante(tipo_variante_id, modelo_id)
+	select distinct
+		t.tipo_variante_id,
+		mo.modelo_id
+	from gd_esquema.Maestra m
+	join AguanteMySql36.Tipo_variante t
+	on t.descripcion = m.PRODUCTO_TIPO_VARIANTE
+	join AguanteMySql36.Modelo mo
+	on mo.descripcion = m.PRODUCTO_VARIANTE
+	WHERE PRODUCTO_VARIANTE_CODIGO is not null
 	
 	IF @@ERROR != 0
 		PRINT('variante FAIL!')
@@ -705,6 +746,11 @@ BEGIN
 		AND CLIENTE_CODIGO_POSTAL IS NOT NULL
 		AND CLIENTE_LOCALIDAD IS NOT NULL
 
+	IF @@ERROR != 0
+		PRINT('BARRIO FAIL!')
+	ELSE
+		PRINT('BARRIO OK!')
+
 END
 
 GO
@@ -728,6 +774,10 @@ BEGIN
 	ON me.nombre_medio_envio = m.VENTA_MEDIO_ENVIO
 	WHERE VENTA_CODIGO IS NOT NULL
 
+	IF @@ERROR != 0
+		PRINT('ENVIO FAIL!')
+	ELSE
+		PRINT('ENVIO OK!')
 
 END
 
@@ -835,6 +885,8 @@ EXEC AguanteMySql36.migrar_provincias
 GO
 EXEC AguanteMySql36.migrar_tipo_variante
 GO
+EXEC AguanteMySql36.migrar_modelo
+go
 EXEC AguanteMySql36.migrar_variante
 GO
 EXEC AguanteMySql36.migrar_barrio
