@@ -781,6 +781,34 @@ END
 
 GO
 
+CREATE PROCEDURE [AguanteMySql36].migrar_producto
+AS
+BEGIN
+	
+	INSERT INTO AguanteMySql36.Producto(producto_id,marca_id,categoria_id,material_id,nombre,descripcion)
+	SELECT distinct
+		PRODUCTO_CODIGO,
+		ma.marca_id,
+		c.categoria_id,
+		mat.material_id,
+		PRODUCTO_NOMBRE,
+		PRODUCTO_DESCRIPCION
+	FROM gd_esquema.Maestra m
+	JOIN AguanteMySql36.Marca ma
+	ON ma.nombre = m.PRODUCTO_MARCA
+	JOIN AguanteMySql36.Categoria c
+	ON c.nombre = m.PRODUCTO_CATEGORIA
+	JOIN AguanteMySql36.material mat
+	ON mat.nombre = m.PRODUCTO_MATERIAL
+	WHERE PRODUCTO_CODIGO IS NOT NULL
+
+		IF @@ERROR != 0
+		PRINT('PRODUCTO FAIL!')
+	ELSE
+		PRINT('PRODUCTO OK!')
+
+END
+
 
 SELECT DISTINCT
 	PRODUCTO_CODIGO,
@@ -831,7 +859,9 @@ GO
 EXEC AguanteMySql36.migrar_barrio
 GO
 EXEC [AguanteMySql36].migrar_envio
- 
+GO
+EXEC AguanteMySql36.migrar_producto
+
 
 
 
