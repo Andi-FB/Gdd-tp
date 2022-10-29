@@ -132,10 +132,11 @@ CREATE TABLE [AguanteMySql36].[provincias] (
 );
 
 CREATE TABLE [AguanteMySql36].[Barrio] (
+  [id_barrio] INT IDENTITY(1,1),
   [codigo_postal] DECIMAL(18,0),
   [provincia_id] int,
-  [nombre] varchar,
-  PRIMARY KEY ([codigo_postal]),
+  [nombre] nvarchar(255),
+  PRIMARY KEY ([id_barrio]),
   CONSTRAINT [FK_Barrio.provincia_id]
     FOREIGN KEY ([provincia_id])
       REFERENCES [AguanteMySql36].[provincias]([id])
@@ -143,7 +144,7 @@ CREATE TABLE [AguanteMySql36].[Barrio] (
 
 CREATE TABLE [AguanteMySql36].[Envio] (
   [envio_id] int IDENTITY(1,1),
-  [codigo_postal] DECIMAL(18,0),
+  [id_barrio] int,
   [medio_envio_id] int,
   [precio_envio] decimal(18,2),
   PRIMARY KEY ([envio_id]),
@@ -151,8 +152,8 @@ CREATE TABLE [AguanteMySql36].[Envio] (
     FOREIGN KEY ([medio_envio_id])
       REFERENCES [AguanteMySql36].[Medio_envio]([id]),
   CONSTRAINT [FK_Envio.codigo_postal]
-    FOREIGN KEY ([codigo_postal])
-      REFERENCES [AguanteMySql36].[Barrio]([codigo_postal])
+    FOREIGN KEY ([id_barrio])
+      REFERENCES [AguanteMySql36].[Barrio]([id_barrio])
 );
 
 CREATE TABLE [AguanteMySql36].[Venta] (
@@ -703,10 +704,32 @@ BEGIN
 
 END
 
+GO
+
+CREATE PROCEDURE [AguanteMySql36].migrar_envio
+AS
+BEGIN
+	INSERT INTO AguanteMySql36.Envio(id_barrio,medio_envio_id,precio_envio)
+	SELECT DISTINCT
+		b.id_barrio as id_barrio,
+		me.id as medio_envio_id,
+		m.VENTA_ENVIO_PRECIO as precio_envio
+	FROM gd_esquema.Maestra m
+	JOIN AguanteMySql36.provincias p
+	ON p.nombre = m.CLIENTE_PROVINCIA
+	JOIN AguanteMySql36.Barrio b
+	ON b.codigo_postal = m.CLIENTE_CODIGO_POSTAL AND
+	   b.provincia_id = p.id AND
+	   b.nombre = m.CLIENTE_LOCALIDAD
+	JOIN AguanteMySql36.Medio_envio me
+	ON me.nombre_medio_envio = m.VENTA_MEDIO_ENVIO
+	WHERE VENTA_CODIGO IS NOT NULL
 
 
+END
 
 
+GO
 
 
 SELECT DISTINCT
@@ -755,6 +778,7 @@ EXEC AguanteMySql36.migrar_variante
 GO
 EXEC AguanteMySql36.migrar_barrio
 GO
+EXEC [AguanteMySql36].migrar_envio
  
 
 
