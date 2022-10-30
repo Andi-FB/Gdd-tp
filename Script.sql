@@ -93,6 +93,7 @@ GO
 CREATE TABLE [AguanteMySql36].[Canal_venta] (
   [id] int IDENTITY(1,1),
   [nombre] nvarchar(255),
+  [costo] decimal(18,2),
   PRIMARY KEY ([id])
 );
 
@@ -163,10 +164,10 @@ CREATE TABLE [AguanteMySql36].[Venta] (
   [envio_id] int,
   [id_medio_pago] Int,
   [fecha_venta] DATE,
-  [medio_pago_costo] decimal(18,2),
-  [medio_pago_descuento] decimal(18,2),
-  [envio_costo] decimal(18,2),
-  [canal_venta_costo] decimal(18,2),
+  --[medio_pago_costo] decimal(18,2),
+  --[medio_pago_descuento] decimal(18,2),
+  --[envio_costo] decimal(18,2),
+  --[canal_venta_costo] decimal(18,2),
   [total] decimal(18,2),
   [canal_venta] int,
   PRIMARY KEY ([num_venta]),
@@ -465,7 +466,7 @@ BEGIN
 										mail, 
 										fecha_nacimiento, 
 										localidad)
-	SELECT DISTINCT
+	SELECT
 	CLIENTE_NOMBRE,
 	CLIENTE_APELLIDO,
 	CLIENTE_DNI,
@@ -487,7 +488,18 @@ BEGIN
 			CLIENTE_MAIL is not null and
 			CLIENTE_FECHA_NAC is not null and
 			CLIENTE_LOCALIDAD is not null 
-
+	GROUP BY
+	CLIENTE_NOMBRE,
+	CLIENTE_APELLIDO,
+	CLIENTE_DNI,
+	CLIENTE_PROVINCIA,
+	CLIENTE_CODIGO_POSTAL,
+	CLIENTE_DIRECCION,
+	CLIENTE_TELEFONO,
+	CLIENTE_MAIL,
+	CLIENTE_FECHA_NAC,
+	CLIENTE_LOCALIDAD
+		
 	IF @@ERROR != 0
 	PRINT('CLIENTE FAIL!')
 	ELSE
@@ -574,9 +586,10 @@ GO
 CREATE PROCEDURE [AguanteMySql36].migrar_canal_venta
 AS 
 BEGIN
-	INSERT INTO [AguanteMySql36].Canal_venta(nombre)
+	INSERT INTO [AguanteMySql36].Canal_venta(nombre,costo)
 	SELECT DISTINCT
-		VENTA_CANAL as nombre 
+		VENTA_CANAL as nombre,
+		VENTA_CANAL_COSTO
 	FROM gd_esquema.Maestra
 	WHERE VENTA_CANAL is not null
 
@@ -884,6 +897,80 @@ BEGIN
 		PRINT('DESCUENTO_X_COMPRA OK!')
 END
 
+GO
+
+CREATE PROCEDURE [AguanteMySql36].migrar_venta
+AS
+BEGIN
+
+	CREATE TABLE[AguanteMySql36].#TEMP_VENTAS (
+		venta_codigo decimal(19,0),
+		cliente_id int,
+		envio_id int,
+		total decimal(18,2),
+		fecha_venta date,
+		venta_medio_pago_costo decimal(18,2),
+		VENTA_MEDIO_PAGO nvarchar(255),
+		VENTA_CANAL nvarchar(2555),
+		VENTA_CANAL_COSTO decimal(18,2)
+	)
+
+	INSERT INTO [AguanteMySql36].#TEMP_VENTAS(venta_codigo, cliente_id, envio_id,total, venta_medio_pago_costo, venta_medio_pago, VENTA_CANAL, VENTA_CANAL_COSTO, fecha_venta)
+	SELECT DISTINCT
+		VENTA_CODIGO,
+		c.cliente_id,
+		e.envio_id,
+		VENTA_TOTAL,
+		venta_medio_pago_costo,
+		venta_medio_pago,
+		VENTA_CANAL,
+		VENTA_CANAL_COSTO,
+		VENTA_FECHA
+	FROM gd_esquema.Maestra m
+	JOIN AguanteMySql36.Cliente c
+	ON c.dni = m.CLIENTE_DNI AND
+	   c.nombre = m.CLIENTE_NOMBRE AND
+	   c.apellido = m.CLIENTE_APELLIDO AND
+	   c.codigo_postal = m.CLIENTE_CODIGO_POSTAL AND
+	   c.mail = m.CLIENTE_MAIL AND
+	   c.localidad = m.CLIENTE_LOCALIDAD
+	JOIN AguanteMySql36.provincias p
+	on p.nombre = m.CLIENTE_PROVINCIA
+	JOIN AguanteMySql36.Barrio b
+	ON b.codigo_postal = m.CLIENTE_CODIGO_POSTAL AND
+	   b.nombre = m.CLIENTE_LOCALIDAD AND
+	   b.provincia_id = p.id
+	JOIN AguanteMySql36.Medio_envio me
+	ON me.nombre_medio_envio = m.VENTA_MEDIO_ENVIO
+	JOIN AguanteMySql36.Envio e
+	ON e.id_barrio = b.id_barrio AND
+	   e.precio_envio = m.VENTA_ENVIO_PRECIO AND
+	   e.medio_envio_id = me.id
+	WHERE VENTA_CODIGO is not null
+
+
+	INSERT INTO AguanteMySql36.Venta(num_venta,cliente_id,envio_id,total,id_medio_pago,canal_venta,fecha_venta)
+	SELECT DISTINCT
+		venta_codigo,
+		cliente_id ,
+		envio_id,
+		total,
+		mpv.id_medio_pago,
+		cv.id as canal_venta_id,
+		fecha_venta
+	FROM AguanteMySql36.#TEMP_VENTAS tv
+	JOIN AguanteMySql36.Medios_de_pago_venta mpv
+	ON mpv.costo_transaccion = tv.VENTA_MEDIO_PAGO_COSTO AND
+	   mpv.tipo = tv.VENTA_MEDIO_PAGO
+	JOIN AguanteMySql36.Canal_venta cv
+	ON cv.nombre = tv.VENTA_CANAL AND
+	   cv.costo = tv.VENTA_CANAL_COSTO
+
+END
+
+GO
+
+
 SELECT DISTINCT
 	PRODUCTO_CODIGO,
 	PRODUCTO_VARIANTE_CODIGO,
@@ -942,7 +1029,8 @@ EXEC [AguanteMySql36].migrar_compra
 GO
 EXEC [AguanteMySql36].migrar_descuento_x_compra
 go
-
+EXEC [AguanteMySql36].migrar_venta
+GO
 
 
 
