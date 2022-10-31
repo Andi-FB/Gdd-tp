@@ -1062,6 +1062,30 @@ BEGIN
 		PRINT('CUPON_X_VENTA OK!')
 END
 
+CREATE PROCEDURE [AguanteMySql36].migrar_descuento_x_venta
+AS
+BEGIN
+	
+	INSERT INTO AguanteMySql36.Descuento_x_venta(id_descuento, num_venta)
+	SELECT 
+	dv.id_concepto,
+	VENTA_CODIGO
+	FROM gd_esquema.Maestra m
+	JOIN AguanteMySql36.Descuento_venta dv
+	on dv.medio_pago = m.VENTA_DESCUENTO_CONCEPTO and
+	   dv.importe = m.VENTA_DESCUENTO_IMPORTE
+	WHERE m.VENTA_DESCUENTO_CONCEPTO IS NOT NULL 
+	AND m.VENTA_DESCUENTO_IMPORTE IS NOT NULL
+	AND m.VENTA_CODIGO IS NOT NULL
+	GROUP BY dv.id_concepto, VENTA_CODIGO
+
+	IF @@ERROR != 0
+		PRINT('DESCUENTO_X_VENTA FAIL!')
+	ELSE
+		PRINT('DESCUENTO_X_VENTA OK!')
+
+END
+
 
 SELECT DISTINCT
 	PRODUCTO_CODIGO,
@@ -1128,4 +1152,6 @@ GO
 EXEC [AguanteMySql36].migrar_producto_por_compra
 go
 EXEC [AguanteMySql36].migrar_cupon_x_venta
+GO
+EXEC [AguanteMySql36].migrar_descuento_x_venta
 GO
