@@ -968,6 +968,11 @@ BEGIN
 	ON cv.nombre = tv.VENTA_CANAL AND
 	   cv.costo = tv.VENTA_CANAL_COSTO
 
+	IF @@ERROR != 0
+		PRINT('VENTA FAIL!')
+	ELSE
+		PRINT('VENTA OK!')
+
 END
 
 GO
@@ -1035,6 +1040,27 @@ BEGIN
 		PRINT('PRODUCTO_POR_COMPRA  OK!')
 END
 
+GO
+
+CREATE PROCEDURE [AguanteMySql36].migrar_cupon_x_venta
+AS
+BEGIN
+
+	INSERT INTO AguanteMySql36.Cupon_x_venta(num_venta, cupon_codigo)
+	SELECT
+	VENTA_CODIGO,
+	VENTA_CUPON_CODIGO
+	FROM gd_esquema.Maestra
+	WHERE VENTA_CUPON_CODIGO IS NOT NULL
+	AND VENTA_CUPON_CODIGO IS NOT NULL
+	GROUP BY VENTA_CODIGO, VENTA_CUPON_CODIGO
+
+
+		IF @@ERROR != 0
+		PRINT('CUPON_X_VENTA FAIL!')
+	ELSE
+		PRINT('CUPON_X_VENTA OK!')
+END
 
 
 SELECT DISTINCT
@@ -1101,3 +1127,5 @@ EXEC [AguanteMySql36].migrar_producto_variante
 GO
 EXEC [AguanteMySql36].migrar_producto_por_compra
 go
+EXEC [AguanteMySql36].migrar_cupon_x_venta
+GO
