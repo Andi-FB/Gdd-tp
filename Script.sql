@@ -365,8 +365,6 @@ CREATE TABLE [AguanteMySql36].[Productos_por_Venta] (
 CREATE TABLE [AguanteMySql36].[Descuento_x_venta] (
   [id_descuento] int,
   [num_venta] decimal(19,0),
-  [importe_descuento] decimal(18,2),
-  [descuento_concepto] decimal(18,0),
   PRIMARY KEY([id_descuento],[num_venta]),
   CONSTRAINT [FK_Descuento_x_venta.id_descuento]
     FOREIGN KEY ([id_descuento])
@@ -1193,3 +1191,11 @@ EXEC [AguanteMySql36].migrar_descuento_x_venta
 GO
 EXEC [AguanteMySql36].migrar_producto_por_venta
 
+
+
+SELECT
+  *
+FROM
+  SYSOBJECTS
+WHERE
+  xtype = 'U';
