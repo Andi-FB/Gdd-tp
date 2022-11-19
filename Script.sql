@@ -116,7 +116,6 @@ CREATE TABLE [AguanteMySql36].[Cliente] (
 CREATE TABLE [AguanteMySql36].[Medios_de_pago_venta] (
   [id_medio_pago] Int IDENTITY(1,1),
   [tipo] nvarchar(2255), -- TODO! Checkear si el tipo de dato est� bien
-  [costo_transaccion] decimal(18,2),
   [descuento_medio] decimal(3,1),
   PRIMARY KEY ([id_medio_pago])
 );
@@ -148,7 +147,6 @@ CREATE TABLE [AguanteMySql36].[Envio] (
   [envio_id] int IDENTITY(1,1),
   [id_barrio] int,
   [medio_envio_id] int,
-  [precio_envio] decimal(18,2),
   PRIMARY KEY ([envio_id]),
   CONSTRAINT [FK_Envio.medio_envio_id]
     FOREIGN KEY ([medio_envio_id])
@@ -622,10 +620,9 @@ GO
 CREATE PROCEDURE [AguanteMySql36].migrar_Medios_de_pago_venta
 AS 
 BEGIN
-	INSERT INTO [AguanteMySql36].Medios_de_pago_venta(tipo, costo_transaccion)
+	INSERT INTO [AguanteMySql36].Medios_de_pago_venta(tipo)
 	SELECT DISTINCT
-		VENTA_MEDIO_PAGO as tipo,
-    VENTA_MEDIO_PAGO_COSTO as costo_transaccion
+		VENTA_MEDIO_PAGO as tipo
 	FROM gd_esquema.Maestra
 	WHERE VENTA_MEDIO_PAGO is not null
 
@@ -767,11 +764,10 @@ GO
 CREATE PROCEDURE [AguanteMySql36].migrar_envio
 AS
 BEGIN
-	INSERT INTO AguanteMySql36.Envio(id_barrio,medio_envio_id,precio_envio)
+	INSERT INTO AguanteMySql36.Envio(id_barrio,medio_envio_id)
 	SELECT DISTINCT
 		b.id_barrio as id_barrio,
-		me.id as medio_envio_id,
-		m.VENTA_ENVIO_PRECIO as precio_envio
+		me.id as medio_envio_id
 	FROM gd_esquema.Maestra m
 	JOIN AguanteMySql36.provincias p
 	ON p.nombre = m.CLIENTE_PROVINCIA
@@ -942,7 +938,7 @@ BEGIN
 	ON me.nombre_medio_envio = m.VENTA_MEDIO_ENVIO
 	JOIN AguanteMySql36.Envio e
 	ON e.id_barrio = b.id_barrio AND
-	   e.precio_envio = m.VENTA_ENVIO_PRECIO AND
+	   --e.precio_envio = m.VENTA_ENVIO_PRECIO AND
 	   e.medio_envio_id = me.id
 	WHERE VENTA_CODIGO is not null
 
@@ -961,7 +957,7 @@ BEGIN
 		tv.venta_medio_pago_costo
 	FROM AguanteMySql36.#TEMP_VENTAS tv
 	JOIN AguanteMySql36.Medios_de_pago_venta mpv
-	ON mpv.costo_transaccion = tv.VENTA_MEDIO_PAGO_COSTO AND
+	ON --mpv.costo_transaccion = tv.VENTA_MEDIO_PAGO_COSTO AND
 	   mpv.tipo = tv.VENTA_MEDIO_PAGO
 	JOIN AguanteMySql36.Canal_venta cv
 	ON cv.nombre = tv.VENTA_CANAL
