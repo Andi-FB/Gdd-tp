@@ -167,7 +167,7 @@ CREATE TABLE [AguanteMySql36].[Venta] (
   --[medio_pago_costo] decimal(18,2),
   --[medio_pago_descuento] decimal(18,2),
   --[envio_costo] decimal(18,2),
-  --[canal_venta_costo] decimal(18,2),
+  [canal_venta_costo] decimal(18,2),
   [total] decimal(18,2),
   [canal_venta] int,
   PRIMARY KEY ([num_venta]),
@@ -509,11 +509,6 @@ END
 
 GO
 
-
--- TODO: Investigar como DROPEAR los stored procedures
--- DROP PROCEDURE [<stored procedure name>];
--- GO
-
 --Categoria
 
 GO
@@ -587,10 +582,9 @@ GO
 CREATE PROCEDURE [AguanteMySql36].migrar_canal_venta
 AS 
 BEGIN
-	INSERT INTO [AguanteMySql36].Canal_venta(nombre,costo)
+	INSERT INTO [AguanteMySql36].Canal_venta(nombre)
 	SELECT DISTINCT
-		VENTA_CANAL as nombre,
-		VENTA_CANAL_COSTO
+		VENTA_CANAL as nombre
 	FROM gd_esquema.Maestra
 	WHERE VENTA_CANAL is not null
 
@@ -950,7 +944,7 @@ BEGIN
 	WHERE VENTA_CODIGO is not null
 
 
-	INSERT INTO AguanteMySql36.Venta(num_venta,cliente_id,envio_id,total,id_medio_pago,canal_venta,fecha_venta)
+	INSERT INTO AguanteMySql36.Venta(num_venta,cliente_id,envio_id,total,id_medio_pago,canal_venta,fecha_venta, canal_venta_costo)
 	SELECT DISTINCT
 		venta_codigo,
 		cliente_id ,
@@ -958,14 +952,14 @@ BEGIN
 		total,
 		mpv.id_medio_pago,
 		cv.id as canal_venta_id,
-		fecha_venta
+		fecha_venta,
+		tv.VENTA_CANAL_COSTO
 	FROM AguanteMySql36.#TEMP_VENTAS tv
 	JOIN AguanteMySql36.Medios_de_pago_venta mpv
 	ON mpv.costo_transaccion = tv.VENTA_MEDIO_PAGO_COSTO AND
 	   mpv.tipo = tv.VENTA_MEDIO_PAGO
 	JOIN AguanteMySql36.Canal_venta cv
-	ON cv.nombre = tv.VENTA_CANAL AND
-	   cv.costo = tv.VENTA_CANAL_COSTO
+	ON cv.nombre = tv.VENTA_CANAL
 
 	IF @@ERROR != 0
 		PRINT('VENTA FAIL!')
