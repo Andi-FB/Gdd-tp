@@ -164,9 +164,10 @@ CREATE TABLE [AguanteMySql36].[Venta] (
   [envio_id] int,
   [id_medio_pago] Int,
   [fecha_venta] DATE,
-  --[medio_pago_costo] decimal(18,2),
+  [venta_medio_pago_costo] decimal(18,2),
   --[medio_pago_descuento] decimal(18,2),
   --[envio_costo] decimal(18,2),
+  [venta_precio_envio] decimal(18,2),
   [canal_venta_costo] decimal(18,2),
   [total] decimal(18,2),
   [canal_venta] int,
@@ -907,10 +908,11 @@ BEGIN
 		venta_medio_pago_costo decimal(18,2),
 		VENTA_MEDIO_PAGO nvarchar(255),
 		VENTA_CANAL nvarchar(2555),
-		VENTA_CANAL_COSTO decimal(18,2)
+		VENTA_CANAL_COSTO decimal(18,2),
+		venta_precio_envio decimal(18,2)
 	)
 
-	INSERT INTO [AguanteMySql36].#TEMP_VENTAS(venta_codigo, cliente_id, envio_id,total, venta_medio_pago_costo, venta_medio_pago, VENTA_CANAL, VENTA_CANAL_COSTO, fecha_venta)
+	INSERT INTO [AguanteMySql36].#TEMP_VENTAS(venta_codigo, cliente_id, envio_id,total, venta_medio_pago_costo, venta_medio_pago, VENTA_CANAL, VENTA_CANAL_COSTO, fecha_venta, venta_precio_envio)
 	SELECT DISTINCT
 		VENTA_CODIGO,
 		c.cliente_id,
@@ -920,7 +922,8 @@ BEGIN
 		venta_medio_pago,
 		VENTA_CANAL,
 		VENTA_CANAL_COSTO,
-		VENTA_FECHA
+		VENTA_FECHA,
+		VENTA_ENVIO_PRECIO
 	FROM gd_esquema.Maestra m
 	JOIN AguanteMySql36.Cliente c
 	ON c.dni = m.CLIENTE_DNI AND
@@ -944,7 +947,7 @@ BEGIN
 	WHERE VENTA_CODIGO is not null
 
 
-	INSERT INTO AguanteMySql36.Venta(num_venta,cliente_id,envio_id,total,id_medio_pago,canal_venta,fecha_venta, canal_venta_costo)
+	INSERT INTO AguanteMySql36.Venta(num_venta,cliente_id,envio_id,total,id_medio_pago,canal_venta,fecha_venta, canal_venta_costo, venta_precio_envio, venta_medio_pago_costo)
 	SELECT DISTINCT
 		venta_codigo,
 		cliente_id ,
@@ -953,7 +956,9 @@ BEGIN
 		mpv.id_medio_pago,
 		cv.id as canal_venta_id,
 		fecha_venta,
-		tv.VENTA_CANAL_COSTO
+		tv.VENTA_CANAL_COSTO,
+		tv.venta_precio_envio,
+		tv.venta_medio_pago_costo
 	FROM AguanteMySql36.#TEMP_VENTAS tv
 	JOIN AguanteMySql36.Medios_de_pago_venta mpv
 	ON mpv.costo_transaccion = tv.VENTA_MEDIO_PAGO_COSTO AND
