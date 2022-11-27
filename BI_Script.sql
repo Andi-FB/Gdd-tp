@@ -280,6 +280,62 @@ END
 GO
 
 
+CREATE PROCEDURE [AguanteMySql36].migrar_BI_Compra_Venta
+AS
+BEGIN
+	
+	SELECT
+		v.num_venta,
+		c.cliente_id,
+		CASE 
+			WHEN datediff(YY,c.fecha_nacimiento,getdate()) < 25 THEN '<25'
+			WHEN datediff(YY,c.fecha_nacimiento,getdate()) >= 25 AND datediff(YY,c.fecha_nacimiento,getdate()) < 35 THEN '25 - 35'
+			WHEN datediff(YY,c.fecha_nacimiento,getdate()) >= 35 AND datediff(YY,c.fecha_nacimiento,getdate()) <= 55 THEN '35 - 55'
+			WHEN datediff(YY,c.fecha_nacimiento,getdate()) > 55 THEN '>55'
+		END as rango_etario,
+		p.id as provincia_id,
+		t.id as tiempo_id,
+		v.canal_venta as canal_venta_id,
+		pv.producto_id,
+		-- tipo_descuento, TODO!!!!!!!!!!!!!!!!!!11
+		v.id_medio_pago,
+		e.medio_envio_id as id_tipo_envio
+	FROM [AguanteMySql36].Venta v
+	join [AguanteMySql36].Productos_por_Venta ppv
+	on ppv.num_venta = v.num_venta  -- TODO! OJO ACA, REVISAR SI ESTA BIEN ESO! (mirar tabla pvv)
+	join [AguanteMySql36].producto_variante pv
+	on pv.producto_variante_id = ppv.producto_variante_id -- IDEM ACA, REVISAR SI ESTA BIEN ESO! (mirar tabla pvv)
+	join [AguanteMySql36].Cliente c
+	on v.cliente_id = c.cliente_id
+	join [AguanteMySql36].Envio e
+	on e.envio_id = v.envio_id
+	join [AguanteMySql36].Barrio b
+	on b.id_barrio = e.id_barrio
+	join [AguanteMySql36].provincias p
+	on p.id = b.provincia_id
+	join [AguanteMySql36].BI_Tiempo t
+	on t.anio = YEAR(v.fecha_venta) and t.mes = MONTH(v.fecha_venta)
+	order by num_venta
+
+	/*
+	select distinct
+	VENTA_CODIGO
+	from gd_esquema.Maestra
+	where VENTA_CODIGO is not null
+
+	select distinct
+	v.num_venta,
+	ppv.
+	FROM [AguanteMySql36].Venta v
+	join [AguanteMySql36].Productos_por_Venta ppv
+	on ppv.num_venta = v.num_venta 
+
+	*/
+
+END
+
+GO
+
 EXEC [AguanteMySql36].migrar_BI_Canal_venta
 EXEC [AguanteMySql36].migrar_BI_Categoria
 EXEC [AguanteMySql36].migrar_BI_Producto
@@ -288,6 +344,7 @@ EXEC [AguanteMySql36].migrar_BI_Rango_Etario
 EXEC [AguanteMySql36].migrar_BI_Tiempo
 EXEC [AguanteMySql36].migrar_BI_Tipo_Descuento
 EXEC [AguanteMySql36].migrar_BI_Tipo_Envio
+EXEC [AguanteMySql36].migrar_BI_Compra_Venta
 
 
 
