@@ -93,7 +93,6 @@ GO
 CREATE TABLE [AguanteMySql36].[Canal_venta] (
   [id] int IDENTITY(1,1),
   [nombre] nvarchar(255),
-  [costo] decimal(18,2),
   PRIMARY KEY ([id])
 );
 
