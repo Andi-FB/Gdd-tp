@@ -1,4 +1,4 @@
-USE [GD2C2022];
+﻿USE [GD2C2022];
 
 -- Elimino FKs de ejecuciones pasadas...
 DECLARE @borrarFKs NVARCHAR(MAX) = N'';
@@ -17,7 +17,7 @@ EXEC sp_executesql @borrarFKs
 DECLARE @borrarTablas NVARCHAR(MAX) = N'';
 
 select
-@borrarTablas  += N'IF OBJECT_ID (''[AguanteMySql36].' + QUOTENAME(name) + ''') IS NOT NULL DROP TABLE [AguanteMySql36].' + QUOTENAME(name) + ';'
+@borrarTablas  += N'IF OBJECT_ID (''[BI_AguanteMySql36].' + QUOTENAME(name) + ''') IS NOT NULL DROP TABLE [BI_AguanteMySql36].' + QUOTENAME(name) + ';'
 from sys.tables
 where name LIKE 'BI_%'
 group by name
@@ -25,46 +25,90 @@ group by name
 print @borrarTablas
 EXEC sp_executesql @borrarTablas 
 
+GO
+
+-- Dropeo de Stored Procedures
+
+IF EXISTS(	select
+		*
+	from sys.sysobjects
+	where xtype = 'P' and name like '%migrar_BI%'
+	)
+	BEGIN
+	
+	
+	PRINT 'Existen procedures de una ejecuci�n pasada'
+	PRINT 'Se procede a borrarlos...'
+
+	DECLARE @sql NVARCHAR(MAX) = N'';
+
+	SELECT @sql += N'
+	DROP PROCEDURE [BI_AguanteMySql36].'
+	  + QUOTENAME(name) + ';'
+	FROM sys.sysobjects
+	WHERE xtype = 'P' and name like '%migrar_BI%'
+
+	--PRINT @sql;
+
+	EXEC sp_executesql @sql
+
+	
+	END
+
+GO
 
 
-CREATE TABLE [AguanteMySql36].[BI_Tiempo] (
+GO
+
+IF EXISTS(
+SELECT * FROM sys.schemas where name = 'BI_AguanteMySql36'
+)
+BEGIN
+	DROP SCHEMA [BI_AguanteMySql36]
+
+END
+GO
+CREATE SCHEMA [BI_AguanteMySql36];
+GO
+
+CREATE TABLE [BI_AguanteMySql36].[BI_Tiempo] (
   [id] integer identity(1,1),
   [anio] decimal(19,2),
   [mes] decimal(19,2),
   PRIMARY KEY ([id])
 );
 
-CREATE TABLE [AguanteMySql36].[BI_provincias] (
+CREATE TABLE [BI_AguanteMySql36].[BI_provincias] (
   [id] integer,
   [nombre] nvarchar(255),
   PRIMARY KEY ([id])
 );
 
-CREATE TABLE [AguanteMySql36].[BI_Rango_Etario] (
+CREATE TABLE [BI_AguanteMySql36].[BI_Rango_Etario] (
   [id] integer identity(1,1),
   [rango] nvarchar(32),
   PRIMARY KEY ([id])
 );
 
-CREATE TABLE [AguanteMySql36].[BI_Canal_venta] (
+CREATE TABLE [BI_AguanteMySql36].[BI_Canal_venta] (
   [id] integer,
   [nombre] nvarchar(255),
   PRIMARY KEY ([id])
 );
 
-CREATE TABLE [AguanteMySql36].[BI_Medios_de_pago_venta] (
+CREATE TABLE [BI_AguanteMySql36].[BI_Medios_de_pago_venta] (
   [id] integer,
   [tipo] varchar(50),
   PRIMARY KEY ([id])
 );
 
-CREATE TABLE [AguanteMySql36].[BI_Categoria] (
+CREATE TABLE [BI_AguanteMySql36].[BI_Categoria] (
   [categoria_id] integer,
   [nombre] varchar(255),
   PRIMARY KEY ([categoria_id])
 );
 
-CREATE TABLE [AguanteMySql36].[BI_Producto] (
+CREATE TABLE [BI_AguanteMySql36].[BI_Producto] (
   [producto_id] nvarchar(50),
   [categoria_id] integer,
   [nombre] nvarchar(50),
@@ -72,22 +116,22 @@ CREATE TABLE [AguanteMySql36].[BI_Producto] (
   PRIMARY KEY ([producto_id]),
   CONSTRAINT [FK_BI_Producto.categoria_id]
     FOREIGN KEY ([categoria_id])
-      REFERENCES [AguanteMySql36].[BI_Categoria]([categoria_id])
+      REFERENCES [BI_AguanteMySql36].[BI_Categoria]([categoria_id])
 );
 
-CREATE TABLE [AguanteMySql36].[BI_Tipo_Descuento] (
+CREATE TABLE [BI_AguanteMySql36].[BI_Tipo_Descuento] (
   [id] integer,
   [tipo_descuento] nvarchar(255),
   PRIMARY KEY ([id])
 );
 
-CREATE TABLE [AguanteMySql36].[BI_Tipo_envio] (
+CREATE TABLE [BI_AguanteMySql36].[BI_Tipo_envio] (
   [id] integer,
   [nombre_medio_envio] varchar(255),
   PRIMARY KEY ([id])
 );
 
-CREATE TABLE [AguanteMySql36].[BI_Compra_Venta] (
+CREATE TABLE [BI_AguanteMySql36].[BI_Compra_Venta] (
   [id] integer identity(1,1),
   [num_venta] decimal(19,0),
   [id_rango_etario] integer,
@@ -99,6 +143,7 @@ CREATE TABLE [AguanteMySql36].[BI_Compra_Venta] (
   [id_tipo_descuento] integer,
   [id_tipo_envio] integer,
   [num_compra] decimal(19,0),
+  [proveedor_id] int,
   [ganancia_mensual_canal_venta] decimal(19,2),
   [porcentaje_rentabilidad_anual] decimal(19,2),
   [ingreso_mensual_medio_pago] decimal(19,2),
@@ -109,37 +154,37 @@ CREATE TABLE [AguanteMySql36].[BI_Compra_Venta] (
   PRIMARY KEY ([id]),
   CONSTRAINT [FK_BI_Compra_Venta.id_tipo_envio]
     FOREIGN KEY ([id_tipo_envio])
-      REFERENCES [AguanteMySql36].[BI_Tipo_envio]([id]),
+      REFERENCES [BI_AguanteMySql36].[BI_Tipo_envio]([id]),
   CONSTRAINT [FK_BI_Compra_Venta.id_tipo_descuento]
     FOREIGN KEY ([id_tipo_descuento])
-      REFERENCES [AguanteMySql36].[BI_Tipo_Descuento]([id]),
+      REFERENCES [BI_AguanteMySql36].[BI_Tipo_Descuento]([id]),
   CONSTRAINT [FK_BI_Compra_Venta.id_producto]
     FOREIGN KEY ([id_producto])
-      REFERENCES [AguanteMySql36].[BI_Producto]([producto_id]),
+      REFERENCES [BI_AguanteMySql36].[BI_Producto]([producto_id]),
   CONSTRAINT [FK_BI_Compra_Venta.id_canal_venta]
     FOREIGN KEY ([id_canal_venta])
-      REFERENCES [AguanteMySql36].[BI_Canal_venta]([id]),
+      REFERENCES [BI_AguanteMySql36].[BI_Canal_venta]([id]),
   CONSTRAINT [FK_BI_Compra_Venta.id_medio_pago_venta]
     FOREIGN KEY ([id_medio_pago_venta])
-      REFERENCES [AguanteMySql36].[BI_Medios_de_pago_venta]([id]),
+      REFERENCES [BI_AguanteMySql36].[BI_Medios_de_pago_venta]([id]),
   CONSTRAINT [FK_BI_Compra_Venta.id_tiempo]
     FOREIGN KEY ([id_tiempo])
-      REFERENCES [AguanteMySql36].[BI_Tiempo]([id]),
+      REFERENCES [BI_AguanteMySql36].[BI_Tiempo]([id]),
   CONSTRAINT [FK_BI_Compra_Venta.id_provincia]
     FOREIGN KEY ([id_provincia])
-      REFERENCES [AguanteMySql36].[BI_provincias]([id]),
+      REFERENCES [BI_AguanteMySql36].[BI_provincias]([id]),
   CONSTRAINT [FK_BI_Compra_Venta.id_rango_etario]
     FOREIGN KEY ([id_rango_etario])
-      REFERENCES [AguanteMySql36].[BI_Rango_Etario]([id])
+      REFERENCES [BI_AguanteMySql36].[BI_Rango_Etario]([id])
 );
 
 GO
 
 
-CREATE PROCEDURE [AguanteMySql36].migrar_BI_Canal_venta
+CREATE PROCEDURE [BI_AguanteMySql36].migrar_BI_Canal_venta
 AS 
 BEGIN
-	INSERT INTO [AguanteMySql36].BI_Canal_venta (id, nombre)
+	INSERT INTO [BI_AguanteMySql36].BI_Canal_venta (id, nombre)
 	SELECT
 		id,
 		nombre
@@ -154,10 +199,10 @@ END
 
 GO
 
-CREATE PROCEDURE [AguanteMySql36].migrar_BI_Categoria
+CREATE PROCEDURE [BI_AguanteMySql36].migrar_BI_Categoria
 AS
 BEGIN
-	INSERT INTO [AguanteMySql36].BI_Categoria
+	INSERT INTO [BI_AguanteMySql36].BI_Categoria
 	SELECT
 		[categoria_id]
 		,[nombre]
@@ -172,10 +217,10 @@ END
 
 GO
 
-CREATE PROCEDURE [AguanteMySql36].migrar_BI_Producto
+CREATE PROCEDURE [BI_AguanteMySql36].migrar_BI_Producto
 AS
 BEGIN
-	INSERT INTO BI_Producto(producto_id, categoria_id, nombre, descripcion)
+	INSERT INTO [BI_AguanteMySql36].BI_Producto(producto_id, categoria_id, nombre, descripcion)
 	SELECT
 	producto_id,
 	categoria_id,
@@ -192,10 +237,10 @@ END
 
 GO
 
-CREATE PROCEDURE [AguanteMySql36].migrar_BI_Provincia
+CREATE PROCEDURE [BI_AguanteMySql36].migrar_BI_Provincia
 AS
 BEGIN
-	INSERT INTO [AguanteMySql36].BI_provincias(id, nombre)
+	INSERT INTO [BI_AguanteMySql36].BI_provincias(id, nombre)
 	SELECT
 	id,
 	nombre
@@ -210,10 +255,10 @@ END
 
 GO
 
-CREATE PROCEDURE [AguanteMySql36].migrar_BI_Rango_Etario
+CREATE PROCEDURE [BI_AguanteMySql36].migrar_BI_Rango_Etario
 AS
 BEGIN
-	INSERT INTO [AguanteMySql36].BI_Rango_Etario(rango) VALUES
+	INSERT INTO [BI_AguanteMySql36].BI_Rango_Etario(rango) VALUES
 	('<25'),
 	('25 - 35'),
 	('35 - 55'),
@@ -227,10 +272,10 @@ END
 
 GO
 
-CREATE PROCEDURE [AguanteMySql36].migrar_BI_Tiempo 
+CREATE PROCEDURE [BI_AguanteMySql36].migrar_BI_Tiempo 
 AS
 BEGIN
-	INSERT INTO [AguanteMySql36].BI_Tiempo(anio, mes)
+	INSERT INTO [BI_AguanteMySql36].BI_Tiempo(anio, mes)
 	SELECT DISTINCT
 		YEAR(v.fecha_venta),
 		MONTH(v.fecha_venta)
@@ -251,7 +296,7 @@ END
 
 GO
 
-CREATE PROCEDURE [AguanteMySql36].migrar_BI_Tipo_Descuento
+CREATE PROCEDURE [BI_AguanteMySql36].migrar_BI_Tipo_Descuento
 AS
 BEGIN
 
@@ -261,10 +306,10 @@ END
 
 GO
 
-CREATE PROCEDURE [AguanteMySql36].migrar_BI_Tipo_Envio
+CREATE PROCEDURE [BI_AguanteMySql36].migrar_BI_Tipo_Envio
 AS
 BEGIN
-	INSERT INTO [AguanteMySql36].BI_Tipo_envio(id, nombre_medio_envio)
+	INSERT INTO [BI_AguanteMySql36].BI_Tipo_envio(id, nombre_medio_envio)
 	SELECT
 	id,
 	nombre_medio_envio
@@ -279,20 +324,53 @@ END
 
 GO
 
-
-CREATE PROCEDURE [AguanteMySql36].migrar_BI_Compra_Venta
+CREATE PROCEDURE [BI_AguanteMySql36].migrar_Medios_de_pago_venta
 AS
 BEGIN
-	
+
+	INSERT INTO BI_AguanteMySql36.BI_Medios_de_pago_venta(id, tipo)
+	SELECT
+	id_medio_pago,
+	tipo
+	FROM AguanteMySql36.Medios_de_pago_venta
+
+
+END
+
+GO
+
+
+CREATE PROCEDURE [BI_AguanteMySql36].migrar_BI_Compra_Venta
+AS
+BEGIN
+
+	INSERT INTO [BI_AguanteMySql36].BI_Compra_Venta (
+		num_venta,
+		id_rango_etario,
+		id_provincia,
+		id_tiempo,
+		id_canal_venta,
+		id_producto,
+		id_medio_pago_venta,
+		id_tipo_envio
+		--, tipo_envio              TODO!
+	)
 	SELECT
 		v.num_venta,
-		c.cliente_id,
-		CASE 
-			WHEN datediff(YY,c.fecha_nacimiento,getdate()) < 25 THEN '<25'
-			WHEN datediff(YY,c.fecha_nacimiento,getdate()) >= 25 AND datediff(YY,c.fecha_nacimiento,getdate()) < 35 THEN '25 - 35'
-			WHEN datediff(YY,c.fecha_nacimiento,getdate()) >= 35 AND datediff(YY,c.fecha_nacimiento,getdate()) <= 55 THEN '35 - 55'
-			WHEN datediff(YY,c.fecha_nacimiento,getdate()) > 55 THEN '>55'
-		END as rango_etario,
+		(
+			SELECT
+				id
+			FROM [BI_AguanteMySql36].BI_Rango_Etario re
+			where re.rango = (
+			CASE 
+				WHEN datediff(YY,c.fecha_nacimiento,getdate()) < 25 THEN '<25'
+				WHEN datediff(YY,c.fecha_nacimiento,getdate()) >= 25 AND datediff(YY,c.fecha_nacimiento,getdate()) < 35 THEN '25 - 35'
+				WHEN datediff(YY,c.fecha_nacimiento,getdate()) >= 35 AND datediff(YY,c.fecha_nacimiento,getdate()) <= 55 THEN '35 - 55'
+				WHEN datediff(YY,c.fecha_nacimiento,getdate()) > 55 THEN '>55'
+			END
+			)
+		)  as rango_etario
+		,
 		p.id as provincia_id,
 		t.id as tiempo_id,
 		v.canal_venta as canal_venta_id,
@@ -313,38 +391,40 @@ BEGIN
 	on b.id_barrio = e.id_barrio
 	join [AguanteMySql36].provincias p
 	on p.id = b.provincia_id
-	join [AguanteMySql36].BI_Tiempo t
+	join [BI_AguanteMySql36].BI_Tiempo t
 	on t.anio = YEAR(v.fecha_venta) and t.mes = MONTH(v.fecha_venta)
 	order by num_venta
 
-	/*
-	select distinct
-	VENTA_CODIGO
-	from gd_esquema.Maestra
-	where VENTA_CODIGO is not null
 
-	select distinct
-	v.num_venta,
-	ppv.
-	FROM [AguanteMySql36].Venta v
-	join [AguanteMySql36].Productos_por_Venta ppv
-	on ppv.num_venta = v.num_venta 
-
-	*/
+	INSERT INTO BI_AguanteMySql36.BI_Compra_Venta(num_compra, proveedor_id, id_tiempo)
+	SELECT
+		c.num_compra,
+		p.id_proveedor,
+		ti.id as id_tiempo,
+		pv.producto_id
+	FROM AguanteMySql36.Compra c
+	JOIN AguanteMySql36.Producto_por_compra ppc
+	on c.num_compra = ppc.num_compra
+	JOIN [AguanteMySql36].producto_variante pv
+	on pv.producto_variante_id = ppc.producto_variante_id 
+	JOIN AguanteMySql36.Proveedor p
+	on p.id_proveedor = c.proveedor_id
+	JOIN BI_AguanteMySql36.BI_Tiempo ti
+	on ti.anio = YEAR(c.fecha) and ti.mes = MONTH(c.fecha)
 
 END
 
 GO
 
-EXEC [AguanteMySql36].migrar_BI_Canal_venta
-EXEC [AguanteMySql36].migrar_BI_Categoria
-EXEC [AguanteMySql36].migrar_BI_Producto
-EXEC [AguanteMySql36].migrar_BI_Provincia
-EXEC [AguanteMySql36].migrar_BI_Rango_Etario
-EXEC [AguanteMySql36].migrar_BI_Tiempo
-EXEC [AguanteMySql36].migrar_BI_Tipo_Descuento
-EXEC [AguanteMySql36].migrar_BI_Tipo_Envio
-EXEC [AguanteMySql36].migrar_BI_Compra_Venta
+EXEC [BI_AguanteMySql36].migrar_BI_Canal_venta
+EXEC [BI_AguanteMySql36].migrar_BI_Categoria
+EXEC [BI_AguanteMySql36].migrar_BI_Producto
+EXEC [BI_AguanteMySql36].migrar_BI_Provincia
+EXEC [BI_AguanteMySql36].migrar_BI_Rango_Etario
+EXEC [BI_AguanteMySql36].migrar_BI_Tiempo
+EXEC [BI_AguanteMySql36].migrar_BI_Tipo_Descuento
+EXEC [BI_AguanteMySql36].migrar_BI_Tipo_Envio
+EXEC [BI_AguanteMySql36].migrar_BI_Compra_Venta
 
 
 
@@ -366,7 +446,7 @@ EXEC [AguanteMySql36].migrar_BI_Compra_Venta
 /*
 Las ganancias mensuales de cada canal de venta.
 Se entiende por ganancias al total de las ventas, menos el total de las
-compras, menos los costos de transacci�n totales aplicados asociados los
+compras, menos los costos de transacción totales aplicados asociados los
 medios de pagos utilizados en las mismas.
 */
 

@@ -278,8 +278,6 @@ CREATE TABLE [AguanteMySql36].[producto_variante] (
   [producto_variante_codigo] nvarchar(50),
   [producto_id] nvarchar(50),
   [variante_id] int,
-  [precio_unitario] decimal(18,2),
-  [stock] int,
   PRIMARY KEY ([producto_variante_id]),
   CONSTRAINT [FK_producto_variante.variante_id]
     FOREIGN KEY ([variante_id])
@@ -973,13 +971,11 @@ GO
 CREATE PROCEDURE [AguanteMySql36].migrar_producto_variante
 AS
 BEGIN
-	INSERT INTO AguanteMySql36.producto_variante(producto_variante_codigo,producto_id,variante_id,precio_unitario,stock)
+	INSERT INTO AguanteMySql36.producto_variante(producto_variante_codigo,producto_id,variante_id)
 	SELECT DISTINCT
 	maestra.PRODUCTO_VARIANTE_CODIGO,
 	prod.producto_id,
-	va.variante_id,
-	maestra.COMPRA_PRODUCTO_PRECIO,
-	maestra.COMPRA_PRODUCTO_CANTIDAD
+	va.variante_id
 	FROM gd_esquema.Maestra maestra
 	JOIN [AguanteMySql36].Producto prod
 	ON prod.producto_id = maestra.PRODUCTO_CODIGO
@@ -990,7 +986,6 @@ BEGIN
 	JOIN [AguanteMySql36].variante va
 	ON va.tipo_variante_id = tipo_var.tipo_variante_id AND
 	   va.modelo_id = mo.modelo_id  
-
 
 
 	IF @@ERROR != 0
@@ -1023,9 +1018,7 @@ BEGIN
 	JOIN [AguanteMySql36].producto_variante prod_var
 	ON va.variante_id = prod_var.variante_id AND
 	prod_var.producto_variante_codigo = maestra.PRODUCTO_VARIANTE_CODIGO AND
-	prod_var.producto_id = maestra.PRODUCTO_CODIGO AND
-	prod_var.stock = maestra.COMPRA_PRODUCTO_CANTIDAD AND 
-	prod_var.precio_unitario = maestra.COMPRA_PRODUCTO_PRECIO
+	prod_var.producto_id = maestra.PRODUCTO_CODIGO
 
 	IF @@ERROR != 0
 		PRINT('PRODUCTO_POR_COMPRA FAIL!')
@@ -1103,9 +1096,7 @@ BEGIN
 	JOIN [AguanteMySql36].producto_variante prod_var
 	ON va.variante_id = prod_var.variante_id AND
 	prod_var.producto_variante_codigo = maestra.PRODUCTO_VARIANTE_CODIGO AND
-	prod_var.producto_id = maestra.PRODUCTO_CODIGO AND
-	prod_var.stock = maestra.VENTA_PRODUCTO_CANTIDAD AND 
-	prod_var.precio_unitario = maestra.VENTA_PRODUCTO_PRECIO
+	prod_var.producto_id = maestra.PRODUCTO_CODIGO
 	WHERE VENTA_CODIGO IS NOT NULL
 		IF @@ERROR != 0
 		PRINT('PRODUCTO_POR_VENTA FAIL!')
