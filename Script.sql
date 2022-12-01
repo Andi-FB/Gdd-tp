@@ -206,7 +206,7 @@ CREATE TABLE [AguanteMySql36].[Cupon_x_venta] (
 CREATE TABLE [AguanteMySql36].[Descuento_venta] (
   [id_descuento] int identity(1,1), 
   [concepto] nvarchar(255),
-  PRIMARY KEY ([id_concepto])
+  PRIMARY KEY ([id_descuento])
 );
 
 CREATE TABLE [AguanteMySql36].[Tipo_variante] (
@@ -364,7 +364,7 @@ CREATE TABLE [AguanteMySql36].[Descuento_x_venta] (
   PRIMARY KEY([id_descuento],[num_venta]),
   CONSTRAINT [FK_Descuento_x_venta.id_descuento]
     FOREIGN KEY ([id_descuento])
-      REFERENCES [AguanteMySql36].[Descuento_venta]([id_concepto]),
+      REFERENCES [AguanteMySql36].[Descuento_venta](id_descuento),
   CONSTRAINT [FK_Descuento_x_venta.num_venta]
     FOREIGN KEY ([num_venta])
       REFERENCES [AguanteMySql36].[Venta]([num_venta])
@@ -673,10 +673,9 @@ GO
 CREATE PROCEDURE [AguanteMySql36].migrar_Descuento_venta
 AS 
 BEGIN
-	INSERT INTO [AguanteMySql36].Descuento_venta(medio_pago, importe) 
+	INSERT INTO [AguanteMySql36].Descuento_venta(concepto) 
 	SELECT DISTINCT
-      VENTA_DESCUENTO_CONCEPTO as medio_pago,
-    	VENTA_DESCUENTO_IMPORTE as importe
+      VENTA_DESCUENTO_CONCEPTO as medio_pago
 	FROM gd_esquema.Maestra
 	WHERE VENTA_DESCUENTO_CONCEPTO is not null
 
@@ -1061,12 +1060,11 @@ BEGIN
     VENTA_DESCUENTO_IMPORTE
 	FROM gd_esquema.Maestra m
 	JOIN AguanteMySql36.Descuento_venta dv
-	on dv.medio_pago = m.VENTA_DESCUENTO_CONCEPTO and
-	   dv.importe = m.VENTA_DESCUENTO_IMPORTE
+	on dv.concepto = m.VENTA_DESCUENTO_CONCEPTO
 	WHERE m.VENTA_DESCUENTO_CONCEPTO IS NOT NULL 
 	AND m.VENTA_DESCUENTO_IMPORTE IS NOT NULL
 	AND m.VENTA_CODIGO IS NOT NULL
-	GROUP BY dv.id_concepto, VENTA_CODIGO
+	GROUP BY dv.id_descuento, VENTA_CODIGO, m.VENTA_DESCUENTO_IMPORTE
 
 	IF @@ERROR != 0
 		PRINT('DESCUENTO_X_VENTA FAIL!')
