@@ -204,9 +204,8 @@ CREATE TABLE [AguanteMySql36].[Cupon_x_venta] (
 );
 
 CREATE TABLE [AguanteMySql36].[Descuento_venta] (
-	[id_concepto] int identity(1,1), 
-  [medio_pago] nvarchar(255),
-  [importe] decimal(18,0),
+  [id_descuento] int identity(1,1), 
+  [concepto] nvarchar(255),
   PRIMARY KEY ([id_concepto])
 );
 
@@ -361,6 +360,7 @@ CREATE TABLE [AguanteMySql36].[Productos_por_Venta] (
 CREATE TABLE [AguanteMySql36].[Descuento_x_venta] (
   [id_descuento] int,
   [num_venta] decimal(19,0),
+  [importe] decimal(19,0),
   PRIMARY KEY([id_descuento],[num_venta]),
   CONSTRAINT [FK_Descuento_x_venta.id_descuento]
     FOREIGN KEY ([id_descuento])
@@ -1054,10 +1054,11 @@ CREATE PROCEDURE [AguanteMySql36].migrar_descuento_x_venta
 AS
 BEGIN
 	
-	INSERT INTO AguanteMySql36.Descuento_x_venta(id_descuento, num_venta)
+	INSERT INTO AguanteMySql36.Descuento_x_venta(id_descuento, num_venta, importe)
 	SELECT 
-	dv.id_concepto,
-	VENTA_CODIGO
+	dv.id_descuento,
+	VENTA_CODIGO,
+    VENTA_DESCUENTO_IMPORTE
 	FROM gd_esquema.Maestra m
 	JOIN AguanteMySql36.Descuento_venta dv
 	on dv.medio_pago = m.VENTA_DESCUENTO_CONCEPTO and
