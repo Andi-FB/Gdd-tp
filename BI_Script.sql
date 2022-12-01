@@ -32,7 +32,7 @@ GO
 IF EXISTS(	select
 		*
 	from sys.sysobjects
-	where xtype = 'P' and name like '%migrar_BI%'
+	where xtype = 'P' and name like '%migracion_BI%'
 	)
 	BEGIN
 	
@@ -46,7 +46,7 @@ IF EXISTS(	select
 	DROP PROCEDURE [BI_AguanteMySql36].'
 	  + QUOTENAME(name) + ';'
 	FROM sys.sysobjects
-	WHERE xtype = 'P' and name like '%migrar_BI%'
+	WHERE xtype = 'P' and name like '%migracion_BI%'
 
 	--PRINT @sql;
 
@@ -98,7 +98,7 @@ CREATE TABLE [BI_AguanteMySql36].[BI_Canal_venta] (
 
 CREATE TABLE [BI_AguanteMySql36].[BI_Medios_de_pago_venta] (
   [id] integer,
-  [tipo] varchar(50),
+  [tipo] varchar(2255),
   PRIMARY KEY ([id])
 );
 
@@ -181,7 +181,7 @@ CREATE TABLE [BI_AguanteMySql36].[BI_Compra_Venta] (
 GO
 
 
-CREATE PROCEDURE [BI_AguanteMySql36].migrar_BI_Canal_venta
+CREATE PROCEDURE [BI_AguanteMySql36].migracion_BI_Canal_venta
 AS 
 BEGIN
 	INSERT INTO [BI_AguanteMySql36].BI_Canal_venta (id, nombre)
@@ -199,7 +199,7 @@ END
 
 GO
 
-CREATE PROCEDURE [BI_AguanteMySql36].migrar_BI_Categoria
+CREATE PROCEDURE [BI_AguanteMySql36].migracion_BI_Categoria
 AS
 BEGIN
 	INSERT INTO [BI_AguanteMySql36].BI_Categoria
@@ -217,7 +217,7 @@ END
 
 GO
 
-CREATE PROCEDURE [BI_AguanteMySql36].migrar_BI_Producto
+CREATE PROCEDURE [BI_AguanteMySql36].migracion_BI_Producto
 AS
 BEGIN
 	INSERT INTO [BI_AguanteMySql36].BI_Producto(producto_id, categoria_id, nombre, descripcion)
@@ -237,7 +237,7 @@ END
 
 GO
 
-CREATE PROCEDURE [BI_AguanteMySql36].migrar_BI_Provincia
+CREATE PROCEDURE [BI_AguanteMySql36].migracion_BI_Provincia
 AS
 BEGIN
 	INSERT INTO [BI_AguanteMySql36].BI_provincias(id, nombre)
@@ -255,7 +255,7 @@ END
 
 GO
 
-CREATE PROCEDURE [BI_AguanteMySql36].migrar_BI_Rango_Etario
+CREATE PROCEDURE [BI_AguanteMySql36].migracion_BI_Rango_Etario
 AS
 BEGIN
 	INSERT INTO [BI_AguanteMySql36].BI_Rango_Etario(rango) VALUES
@@ -272,7 +272,7 @@ END
 
 GO
 
-CREATE PROCEDURE [BI_AguanteMySql36].migrar_BI_Tiempo 
+CREATE PROCEDURE [BI_AguanteMySql36].migracion_BI_Tiempo 
 AS
 BEGIN
 	INSERT INTO [BI_AguanteMySql36].BI_Tiempo(anio, mes)
@@ -296,7 +296,7 @@ END
 
 GO
 
-CREATE PROCEDURE [BI_AguanteMySql36].migrar_BI_Tipo_Descuento
+CREATE PROCEDURE [BI_AguanteMySql36].migracion_BI_Tipo_Descuento
 AS
 BEGIN
 
@@ -306,7 +306,7 @@ END
 
 GO
 
-CREATE PROCEDURE [BI_AguanteMySql36].migrar_BI_Tipo_Envio
+CREATE PROCEDURE [BI_AguanteMySql36].migracion_BI_Tipo_Envio
 AS
 BEGIN
 	INSERT INTO [BI_AguanteMySql36].BI_Tipo_envio(id, nombre_medio_envio)
@@ -324,7 +324,7 @@ END
 
 GO
 
-CREATE PROCEDURE [BI_AguanteMySql36].migrar_Medios_de_pago_venta
+CREATE PROCEDURE [BI_AguanteMySql36].migracion_BI_Medios_de_pago_venta
 AS
 BEGIN
 
@@ -334,13 +334,17 @@ BEGIN
 	tipo
 	FROM AguanteMySql36.Medios_de_pago_venta
 
+		IF @@ERROR != 0
+		PRINT('BI_Medios_de_pago_venta FAIL!')
+	ELSE
+		PRINT('BI_Medios_de_pago_venta OK!')
 
 END
 
 GO
 
 
-CREATE PROCEDURE [BI_AguanteMySql36].migrar_BI_Compra_Venta
+CREATE PROCEDURE [BI_AguanteMySql36].migracion_BI_Compra_Venta
 AS
 BEGIN
 
@@ -396,7 +400,7 @@ BEGIN
 	order by num_venta
 
 
-	INSERT INTO BI_AguanteMySql36.BI_Compra_Venta(num_compra, proveedor_id, id_tiempo)
+	INSERT INTO BI_AguanteMySql36.BI_Compra_Venta(num_compra, proveedor_id, id_tiempo, id_producto)
 	SELECT
 		c.num_compra,
 		p.id_proveedor,
@@ -412,19 +416,27 @@ BEGIN
 	JOIN BI_AguanteMySql36.BI_Tiempo ti
 	on ti.anio = YEAR(c.fecha) and ti.mes = MONTH(c.fecha)
 
+
+	IF @@ERROR != 0
+		PRINT('BI_Compra_Venta FAIL!')
+	ELSE
+		PRINT('BI_Compra_Venta OK!')
+
+
 END
 
 GO
 
-EXEC [BI_AguanteMySql36].migrar_BI_Canal_venta
-EXEC [BI_AguanteMySql36].migrar_BI_Categoria
-EXEC [BI_AguanteMySql36].migrar_BI_Producto
-EXEC [BI_AguanteMySql36].migrar_BI_Provincia
-EXEC [BI_AguanteMySql36].migrar_BI_Rango_Etario
-EXEC [BI_AguanteMySql36].migrar_BI_Tiempo
-EXEC [BI_AguanteMySql36].migrar_BI_Tipo_Descuento
-EXEC [BI_AguanteMySql36].migrar_BI_Tipo_Envio
-EXEC [BI_AguanteMySql36].migrar_BI_Compra_Venta
+EXEC [BI_AguanteMySql36].migracion_BI_Canal_venta
+EXEC [BI_AguanteMySql36].migracion_BI_Categoria
+EXEC [BI_AguanteMySql36].migracion_BI_Producto
+EXEC [BI_AguanteMySql36].migracion_BI_Provincia
+EXEC [BI_AguanteMySql36].migracion_BI_Rango_Etario
+EXEC [BI_AguanteMySql36].migracion_BI_Tiempo
+EXEC [BI_AguanteMySql36].migracion_BI_Tipo_Descuento
+EXEC [BI_AguanteMySql36].migracion_BI_Tipo_Envio
+EXEC [BI_AguanteMySql36].migracion_BI_Medios_de_pago_venta
+EXEC [BI_AguanteMySql36].migracion_BI_Compra_Venta
 
 
 
