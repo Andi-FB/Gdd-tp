@@ -120,7 +120,7 @@ CREATE TABLE [BI_AguanteMySql36].[BI_Producto] (
 );
 
 CREATE TABLE [BI_AguanteMySql36].[BI_Tipo_Descuento] (
-  [id] integer,
+  [id] int identity(1,1),
   [tipo_descuento] nvarchar(255),
   PRIMARY KEY ([id])
 );
@@ -299,8 +299,17 @@ GO
 CREATE PROCEDURE [BI_AguanteMySql36].migracion_BI_Tipo_Descuento
 AS
 BEGIN
-
-	PRINT 'TODO!!! Tipo Descuento!'
+	insert into [BI_AguanteMySql36].BI_Tipo_Descuento(tipo_descuento)
+	Select distinct dv.concepto from AguanteMySql36.Descuento_venta dv
+	WHERE dv.concepto is not null
+	union
+	select distinct c.tipo from AguanteMySql36.Cupon c
+	where c.tipo is not null
+	
+	IF @@ERROR != 0
+		PRINT('BI_Tipo_Descuento FAIL!')
+	ELSE
+		PRINT('BI_Tipo_Descuento OK!')
 
 END
 
@@ -439,7 +448,7 @@ EXEC [BI_AguanteMySql36].migracion_BI_Medios_de_pago_venta
 EXEC [BI_AguanteMySql36].migracion_BI_Compra_Venta
 
 
-
+select * from [BI_AguanteMySql36].BI_Tipo_Descuento
 
 	  -- ESTA LOGICA VA EN LA FACT TABLE
 
@@ -454,6 +463,20 @@ EXEC [BI_AguanteMySql36].migracion_BI_Compra_Venta
 		END
 	FROM [AguanteMySql36].Cliente
 	*/
+
+/*
+Los 5 productos con mayor rentabilidad anual, con sus respectivos %
+Se entiende por rentabilidad a los ingresos generados por el producto
+(ventas) durante el periodo menos la inversión realizada en el producto
+(compras) durante el periodo, todo esto sobre dichos ingresos.
+Valor expresado en porcentaje.
+Para simplificar, no es necesario tener en cuenta los descuentos aplicados.12
+*/
+CREATE VIEW top_5_productos_mayor_rentabilidad AS
+SELECT 
+FROM table_name
+WHERE condition;
+
 
 /*
 Las ganancias mensuales de cada canal de venta.

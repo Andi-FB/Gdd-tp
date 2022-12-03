@@ -55,22 +55,22 @@ IF EXISTS(	select
 	BEGIN
 	
 	
-	PRINT 'Existen procedures de una ejecuci�n pasada'
-	PRINT 'Se procede a borrarlos...'
-
-	DECLARE @sql NVARCHAR(MAX) = N'';
-
-	SELECT @sql += N'
-	DROP PROCEDURE [AguanteMySql36].'
-	  + QUOTENAME(name) + ';'
-	FROM sys.sysobjects
-	WHERE xtype = 'P' and name like '%migrar_%'
-
-	--PRINT @sql;
-
-	EXEC sp_executesql @sql
-
+		PRINT 'Existen procedures de una ejecuci�n pasada'
+		PRINT 'Se procede a borrarlos...'
 	
+		DECLARE @sql NVARCHAR(MAX) = N'';
+	
+		SELECT @sql += N'
+		DROP PROCEDURE [AguanteMySql36].'
+		  + QUOTENAME(name) + ';'
+		FROM sys.sysobjects
+		WHERE xtype = 'P' and name like '%migrar_%'
+	
+		
+	
+		EXEC sp_executesql @sql
+	
+		PRINT 'Borrado exitoso';
 	END
 
 GO
@@ -1018,7 +1018,7 @@ BEGIN
 	ON va.variante_id = prod_var.variante_id AND
 	prod_var.producto_variante_codigo = maestra.PRODUCTO_VARIANTE_CODIGO AND
 	prod_var.producto_id = maestra.PRODUCTO_CODIGO
-
+	where maestra.COMPRA_NUMERO is not null
 	IF @@ERROR != 0
 		PRINT('PRODUCTO_POR_COMPRA FAIL!')
 	ELSE
@@ -1102,7 +1102,6 @@ BEGIN
 	ELSE
 		PRINT('PRODUCTO_POR_VENTA  OK!')
 END
-
 
 
 SELECT DISTINCT
