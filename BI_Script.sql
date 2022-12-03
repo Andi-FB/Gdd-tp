@@ -22,7 +22,7 @@ from sys.tables
 where name LIKE 'BI_%'
 group by name
 
-print @borrarTablas
+print 'Borrado exitoso'
 EXEC sp_executesql @borrarTablas 
 
 GO
@@ -65,10 +65,12 @@ SELECT * FROM sys.schemas where name = 'BI_AguanteMySql36'
 )
 BEGIN
 	DROP SCHEMA [BI_AguanteMySql36]
-
 END
+
 GO
+
 CREATE SCHEMA [BI_AguanteMySql36];
+
 GO
 
 CREATE TABLE [BI_AguanteMySql36].[BI_Tiempo] (
@@ -120,7 +122,7 @@ CREATE TABLE [BI_AguanteMySql36].[BI_Producto] (
 );
 
 CREATE TABLE [BI_AguanteMySql36].[BI_Tipo_Descuento] (
-  [id] integer,
+  [id] int identity(1,1),
   [tipo_descuento] nvarchar(255),
   PRIMARY KEY ([id])
 );
@@ -299,8 +301,17 @@ GO
 CREATE PROCEDURE [BI_AguanteMySql36].migracion_BI_Tipo_Descuento
 AS
 BEGIN
-
-	PRINT 'TODO!!! Tipo Descuento!'
+	insert into [BI_AguanteMySql36].BI_Tipo_Descuento(tipo_descuento)
+	Select distinct dv.concepto from AguanteMySql36.Descuento_venta dv
+	WHERE dv.concepto is not null
+	union
+	select distinct c.tipo from AguanteMySql36.Cupon c
+	where c.tipo is not null
+	
+	IF @@ERROR != 0
+		PRINT('BI_Tipo_Descuento FAIL!')
+	ELSE
+		PRINT('BI_Tipo_Descuento OK!')
 
 END
 
@@ -356,7 +367,8 @@ BEGIN
 		id_canal_venta,
 		id_producto,
 		id_medio_pago_venta,
-		id_tipo_envio
+		id_tipo_envio /*,
+		porcentaje_rentabilidad_anual */
 		--, tipo_envio              TODO!
 	)
 	SELECT
@@ -381,7 +393,22 @@ BEGIN
 		pv.producto_id,
 		-- tipo_descuento, TODO!!!!!!!!!!!!!!!!!!11
 		v.id_medio_pago,
-		e.medio_envio_id as id_tipo_envio
+		e.medio_envio_id as id_tipo_envio /*,
+		(
+			select sum(v3.total) / 
+			(
+				select sum(v2.total) from AguanteMySql36.Venta v2 
+				join AguanteMySql36.Productos_por_Venta ppv2 on v2.num_venta = ppv2.num_venta 
+				join AguanteMySql36.producto_variante pv2 on ppv2.producto_variante_id = pv2.producto_variante_id 
+				where year(v2.fecha_venta) = year(v.fecha_venta)
+			
+			) * 100
+			from AguanteMySql36.Venta v3 
+			join AguanteMySql36.Productos_por_Venta ppv3 on v3.num_venta = ppv3.num_venta 
+			join AguanteMySql36.producto_variante pv3 on ppv3.producto_variante_id = pv3.producto_variante_id 
+			where year(v3.fecha_venta) = year(v.fecha_venta)
+			and pv3.producto_id = pv.producto_id
+		) as porcentaje_rentabilidad_anual */
 	FROM [AguanteMySql36].Venta v
 	join [AguanteMySql36].Productos_por_Venta ppv
 	on ppv.num_venta = v.num_venta  -- TODO! OJO ACA, REVISAR SI ESTA BIEN ESO! (mirar tabla pvv)
@@ -439,7 +466,7 @@ EXEC [BI_AguanteMySql36].migracion_BI_Medios_de_pago_venta
 EXEC [BI_AguanteMySql36].migracion_BI_Compra_Venta
 
 
-
+select * from [BI_AguanteMySql36].BI_Tipo_Descuento
 
 	  -- ESTA LOGICA VA EN LA FACT TABLE
 
@@ -454,6 +481,30 @@ EXEC [BI_AguanteMySql36].migracion_BI_Compra_Venta
 		END
 	FROM [AguanteMySql36].Cliente
 	*/
+
+/*
+Los 5 productos con mayor rentabilidad anual, con sus respectivos %
+Se entiende por rentabilidad a los ingresos generados por el producto
+(ventas) durante el periodo menos la inversión realizada en el producto
+(compras) durante el periodo, todo esto sobre dichos ingresos.
+Valor expresado en porcentaje.
+Para simplificar, no es necesario tener en cuenta los descuentos aplicados.12
+*/
+
+select top 10 * from [BI_AguanteMySql36].BI_Compra_venta
+
+
+select 	
+select * from AguanteMySql36.Venta v
+join AguanteMySql36.Productos_por_Venta ppv on v.num_venta = ppv.num_venta 
+where ppv.producto_variante_id = 3
+select * from AguanteMySql36.Productos_por_Venta ppv 
+where ppv.producto_variante_id = 3
+CREATE VIEW top_5_productos_mayor_rentabilidad AS
+SELECT 
+FROM table_name
+WHERE condition;
+
 
 /*
 Las ganancias mensuales de cada canal de venta.
