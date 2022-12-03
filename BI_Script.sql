@@ -504,5 +504,41 @@ where compras.posicion <= 3
 
 GO
 
+/* Las 5 categorías de productos más vendidos por rango etario de clientes
+por mes */
+CREATE VIEW BI_AguanteMySql36.V_Categorias_Productos_Mas_Vendidos_x_Rango_Etario
+AS
+SELECT DISTINCT
+	nombre as categoria_mas_vendida,
+	rango,
+	anio,
+	mes
+FROM (
+	SELECT --TOP 3
+		cat.nombre,
+		r.rango,
+		ti.anio,
+		ti.mes,
+		ROW_NUMBER() OVER (
+			PARTITION BY ti.anio, ti.mes, r.rango
+			ORDER BY cv.cantidad_vendida_venta DESC
+		) as posicion,
+		cv.cantidad_vendida_venta
+	FROM BI_AguanteMySql36.BI_Compra_Venta cv
+	join BI_AguanteMySql36.BI_Producto p
+	on p.producto_id = cv.id_producto
+	join BI_AguanteMySql36.BI_Categoria cat
+	on cat.categoria_id = p.categoria_id
+	JOIN BI_AguanteMySql36.BI_Tiempo ti
+	ON ti.id = cv.id_tiempo
+	join BI_AguanteMySql36.BI_Rango_Etario r
+	on r.id = cv.id_rango_etario
+	where num_venta is not null 
+	GROUP BY  ti.id, ti.anio, ti.mes,  r.rango, cat.nombre, cv.cantidad_vendida_venta
+	--ORDER BY 2,3,4 DESC
+	) as cant_subquery
+WHERE posicion <= 5
+ORDER BY rango, anio, mes
 
+GO
 
