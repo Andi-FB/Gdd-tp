@@ -57,7 +57,34 @@ IF EXISTS(	select
 
 GO
 
+-- Dropeo de Views
 
+IF EXISTS(
+	select
+		*
+	from sys.sysobjects
+	where xtype = 'V' and name like '%V_%'
+	)
+	BEGIN
+
+	PRINT 'Existen vistas de una ejecuci�n pasada'
+	PRINT 'Se procede a borrarlas...'
+
+	DECLARE @sql NVARCHAR(MAX) = N'';
+
+	SELECT @sql += N'
+	DROP VIEW [BI_AguanteMySql36].'
+	  + QUOTENAME(name) + ';'
+	FROM sys.sysobjects
+	where xtype = 'V' and name like '%V_%'
+
+	--PRINT @sql;
+
+	EXEC sp_executesql @sql
+
+
+
+	END
 GO
 
 IF EXISTS(
@@ -73,8 +100,8 @@ GO
 
 CREATE TABLE [BI_AguanteMySql36].[BI_Tiempo] (
   [id] integer identity(1,1),
-  [anio] decimal(19,2),
-  [mes] decimal(19,2),
+  [anio] decimal(19,0),
+  [mes] decimal(19,0),
   PRIMARY KEY ([id])
 );
 
@@ -142,8 +169,11 @@ CREATE TABLE [BI_AguanteMySql36].[BI_Compra_Venta] (
   [id_producto] nvarchar(50),
   [id_tipo_descuento] integer,
   [id_tipo_envio] integer,
+  costo_transaccion_venta decimal(19,2),
+  cantidad_vendida_venta decimal(19,0),
   [num_compra] decimal(19,0),
   [proveedor_id] int,
+  cantidad_productos_compra decimal(19,0),
   [ganancia_mensual_canal_venta] decimal(19,2),
   [porcentaje_rentabilidad_anual] decimal(19,2),
   [ingreso_mensual_medio_pago] decimal(19,2),
@@ -356,7 +386,9 @@ BEGIN
 		id_canal_venta,
 		id_producto,
 		id_medio_pago_venta,
-		id_tipo_envio
+		id_tipo_envio,
+		costo_transaccion_venta,
+		cantidad_vendida_venta
 		--, tipo_envio              TODO!
 	)
 	SELECT
@@ -381,7 +413,9 @@ BEGIN
 		pv.producto_id,
 		-- tipo_descuento, TODO!!!!!!!!!!!!!!!!!!11
 		v.id_medio_pago,
-		e.medio_envio_id as id_tipo_envio
+		e.medio_envio_id as id_tipo_envio,
+		v.venta_medio_pago_costo,
+		ppv.cantidad_vendida
 	FROM [AguanteMySql36].Venta v
 	join [AguanteMySql36].Productos_por_Venta ppv
 	on ppv.num_venta = v.num_venta  -- TODO! OJO ACA, REVISAR SI ESTA BIEN ESO! (mirar tabla pvv)
@@ -400,12 +434,13 @@ BEGIN
 	order by num_venta
 
 
-	INSERT INTO BI_AguanteMySql36.BI_Compra_Venta(num_compra, proveedor_id, id_tiempo, id_producto)
+	INSERT INTO BI_AguanteMySql36.BI_Compra_Venta(num_compra, proveedor_id, id_tiempo, id_producto, cantidad_productos_compra)
 	SELECT
 		c.num_compra,
 		p.id_proveedor,
 		ti.id as id_tiempo,
-		pv.producto_id
+		pv.producto_id,
+		ppc.cantidad_comprada
 	FROM AguanteMySql36.Compra c
 	JOIN AguanteMySql36.Producto_por_compra ppc
 	on c.num_compra = ppc.num_compra
@@ -415,7 +450,6 @@ BEGIN
 	on p.id_proveedor = c.proveedor_id
 	JOIN BI_AguanteMySql36.BI_Tiempo ti
 	on ti.anio = YEAR(c.fecha) and ti.mes = MONTH(c.fecha)
-
 
 	IF @@ERROR != 0
 		PRINT('BI_Compra_Venta FAIL!')
@@ -439,26 +473,36 @@ EXEC [BI_AguanteMySql36].migracion_BI_Medios_de_pago_venta
 EXEC [BI_AguanteMySql36].migracion_BI_Compra_Venta
 
 
+/* Los 3 productos con mayor cantidad de reposición por mes. */
+
+GO
+CREATE VIEW BI_AguanteMySql36.V_Productos_Mayor_Reposicion
+AS
+SELECT
+id_producto,
+cantidad_reposicion,
+anio,
+mes
+FROM (
+	SELECT --TOP 3
+	cv.id_producto,
+	SUM(cv.cantidad_productos_compra) as cantidad_reposicion,
+	ti.anio,
+	ti.mes,
+	ROW_NUMBER() OVER (
+		PARTITION BY ti.anio, ti.mes
+		ORDER BY SUM(cv.cantidad_productos_compra) DESC
+	) as posicion
+	FROM BI_AguanteMySql36.BI_Compra_Venta cv
+	JOIN BI_AguanteMySql36.BI_Tiempo ti
+	ON ti.id = cv.id_tiempo
+	where num_compra is not null
+	GROUP BY cv.id_producto, ti.id, ti.anio, ti.mes
+	--ORDER BY 3,4 DESC
+	) as compras
+where compras.posicion <= 3
+
+GO
 
 
-	  -- ESTA LOGICA VA EN LA FACT TABLE
-
-	/*
-	SELECT
-	cliente_id,
-	CASE 
-		WHEN datediff(YY,fecha_nacimiento,getdate()) < 25 THEN '<25'
-		WHEN datediff(YY,fecha_nacimiento,getdate()) >= 25 AND datediff(YY,fecha_nacimiento,getdate()) <= 35 THEN '25 - 35'
-		WHEN datediff(YY,fecha_nacimiento,getdate()) >= 35 AND datediff(YY,fecha_nacimiento,getdate()) <= 55 THEN '35 - 55'
-		WHEN datediff(YY,fecha_nacimiento,getdate()) > 55 THEN '>55'
-		END
-	FROM [AguanteMySql36].Cliente
-	*/
-
-/*
-Las ganancias mensuales de cada canal de venta.
-Se entiende por ganancias al total de las ventas, menos el total de las
-compras, menos los costos de transacción totales aplicados asociados los
-medios de pagos utilizados en las mismas.
-*/
 

@@ -390,6 +390,17 @@ CREATE TABLE [AguanteMySql36].[Descuento_x_compra] (
 
 GO
 
+CREATE TABLE [AguanteMySql36].Tipo_descuento
+(
+	id decimal(19,0) identity(1,1),
+	tipo nvarchar(255),
+	PRIMARY KEY (id)
+)
+
+
+
+GO
+
 CREATE PROCEDURE [AguanteMySql36].migrar_material
 AS 
 BEGIN
