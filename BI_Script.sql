@@ -22,7 +22,7 @@ from sys.tables
 where name LIKE 'BI_%'
 group by name
 
-print @borrarTablas
+print 'Borrado exitoso'
 EXEC sp_executesql @borrarTablas 
 
 GO
@@ -65,10 +65,12 @@ SELECT * FROM sys.schemas where name = 'BI_AguanteMySql36'
 )
 BEGIN
 	DROP SCHEMA [BI_AguanteMySql36]
-
 END
+
 GO
+
 CREATE SCHEMA [BI_AguanteMySql36];
+
 GO
 
 CREATE TABLE [BI_AguanteMySql36].[BI_Tiempo] (
@@ -365,7 +367,8 @@ BEGIN
 		id_canal_venta,
 		id_producto,
 		id_medio_pago_venta,
-		id_tipo_envio
+		id_tipo_envio /*,
+		porcentaje_rentabilidad_anual */
 		--, tipo_envio              TODO!
 	)
 	SELECT
@@ -390,7 +393,22 @@ BEGIN
 		pv.producto_id,
 		-- tipo_descuento, TODO!!!!!!!!!!!!!!!!!!11
 		v.id_medio_pago,
-		e.medio_envio_id as id_tipo_envio
+		e.medio_envio_id as id_tipo_envio /*,
+		(
+			select sum(v3.total) / 
+			(
+				select sum(v2.total) from AguanteMySql36.Venta v2 
+				join AguanteMySql36.Productos_por_Venta ppv2 on v2.num_venta = ppv2.num_venta 
+				join AguanteMySql36.producto_variante pv2 on ppv2.producto_variante_id = pv2.producto_variante_id 
+				where year(v2.fecha_venta) = year(v.fecha_venta)
+			
+			) * 100
+			from AguanteMySql36.Venta v3 
+			join AguanteMySql36.Productos_por_Venta ppv3 on v3.num_venta = ppv3.num_venta 
+			join AguanteMySql36.producto_variante pv3 on ppv3.producto_variante_id = pv3.producto_variante_id 
+			where year(v3.fecha_venta) = year(v.fecha_venta)
+			and pv3.producto_id = pv.producto_id
+		) as porcentaje_rentabilidad_anual */
 	FROM [AguanteMySql36].Venta v
 	join [AguanteMySql36].Productos_por_Venta ppv
 	on ppv.num_venta = v.num_venta  -- TODO! OJO ACA, REVISAR SI ESTA BIEN ESO! (mirar tabla pvv)
@@ -472,6 +490,16 @@ Se entiende por rentabilidad a los ingresos generados por el producto
 Valor expresado en porcentaje.
 Para simplificar, no es necesario tener en cuenta los descuentos aplicados.12
 */
+
+select top 10 * from [BI_AguanteMySql36].BI_Compra_venta
+
+
+select 	
+select * from AguanteMySql36.Venta v
+join AguanteMySql36.Productos_por_Venta ppv on v.num_venta = ppv.num_venta 
+where ppv.producto_variante_id = 3
+select * from AguanteMySql36.Productos_por_Venta ppv 
+where ppv.producto_variante_id = 3
 CREATE VIEW top_5_productos_mayor_rentabilidad AS
 SELECT 
 FROM table_name
