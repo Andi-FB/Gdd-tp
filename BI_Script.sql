@@ -505,4 +505,23 @@ where compras.posicion <= 3
 GO
 
 
+/* Valor promedio de envío por Provincia por Medio De Envío anual*/
+
+GO
+CREATE VIEW BI_AguanteMySql36.promedio_ventas_x_provincia_x_medio_envio (nombre_provincia, tipo_medio_envio, anio, total_ventas_por_medio_y_provincia)
+AS
+SELECT DISTINCT
+	prov.nombre,
+	tipo_envio.nombre_medio_envio,
+	year(venta.fecha_venta),
+	SUM(venta.total) / COUNT(venta.num_venta)
+ FROM [GD2C2022].[BI_AguanteMySql36].BI_Compra_Venta cv
+JOIN [GD2C2022].[BI_AguanteMySql36].BI_Tipo_envio tipo_envio
+ON tipo_envio.id = cv.id_tipo_envio
+JOIN [GD2C2022].[BI_AguanteMySql36].BI_provincias prov
+ON prov.id = cv.id_provincia
+JOIN [GD2C2022].[AguanteMySql36].Venta venta
+ON venta.num_venta = cv.num_venta
+group by prov.nombre,tipo_envio.nombre_medio_envio,year(venta.fecha_venta)
+
 
