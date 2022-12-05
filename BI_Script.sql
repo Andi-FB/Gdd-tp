@@ -525,3 +525,33 @@ ON venta.num_venta = cv.num_venta
 group by prov.nombre,tipo_envio.nombre_medio_envio,year(venta.fecha_venta)
 
 
+/*
+	Porcentaje de envíos realizados a cada Provincia por mes. El porcentaje
+	debe representar la cantidad de envíos realizados a cada provincia sobre
+	total de envío mensuales.
+*/
+
+GO
+create VIEW porcentaje_envios_por_mes(nombre_provincia,nombre_mes,porcentaje_x_provincia_x_mes)
+AS
+SELECT DISTINCT
+	prov.nombre,
+	month(v.fecha_venta),
+	(COUNT(distinct env.envio_id) * 100) / (SELECT
+		COUNT(distinct envio.envio_id)
+	FROM [GD2C2022].[AguanteMySql36].Venta venta
+	join [GD2C2022].[AguanteMySql36].Envio envio
+	on  envio.envio_id = venta.envio_id
+	WHERE month(venta.fecha_venta) = month(v.fecha_venta)
+	GROUP BY  month(venta.fecha_venta))
+FROM [GD2C2022].[BI_AguanteMySql36].BI_provincias prov
+JOIN  [GD2C2022].[BI_AguanteMySql36].BI_Compra_Venta cv
+ON cv.id_provincia = prov.id
+JOIN [GD2C2022].[AguanteMySql36].Barrio b
+ON b.provincia_id = prov.id
+JOIN [GD2C2022].[AguanteMySql36].Venta v
+ON v.num_venta = cv.num_venta
+JOIN [GD2C2022].[AguanteMySql36].Envio env
+ON env.envio_id = v.envio_id
+GROUP BY month(v.fecha_venta),prov.nombre
+
