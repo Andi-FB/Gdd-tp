@@ -555,3 +555,41 @@ JOIN [GD2C2022].[AguanteMySql36].Envio env
 ON env.envio_id = v.envio_id
 GROUP BY month(v.fecha_venta),prov.nombre
 
+[5:35, 5/12/2022] Bruno Lombardozzi: /*
+ Aumento promedio de precios de cada proveedor anual. Para calcular este
+indicador se debe tomar como referencia el máximo precio por año menos
+el mínimo todo esto divido el mínimo precio del año. Teniendo en cuenta
+que los precios siempre van en aumento.
+
+TODO: Lo hago sin BI ya que no hay datos tdvia. Eso queda a revisar.
+*/ 
+
+
+GO
+create aumento_promedio_precios_x_proveedor_x_anio(proveedor, anio, aumento_promedio)
+AS
+SELECT distinct
+	prov.id_proveedor,
+	year(compra.fecha),
+	((SELECT TOP 1
+		com.total
+	FROM [GD2C2022].[AguanteMySql36].Compra com
+	where com.num_compra = com.num_compra
+	and com.proveedor_id = prov.id_proveedor
+	order by com.total desc)
+	- (SELECT TOP 1
+		com.total
+	FROM [GD2C2022].[AguanteMySql36].Compra com
+	where com.num_compra = com.num_compra
+	and com.proveedor_id = prov.id_proveedor
+	order by com.total asc)) / (SELECT TOP 1
+		com.total
+	FROM [GD2C2022].[AguanteMySql36].Compra com
+	where com.num_compra = com.num_compra
+	and com.proveedor_id = prov.id_proveedor
+	order by com.total asc)
+FROM [GD2C2022].[AguanteMySql36].Compra compra
+join [GD2C2022].[AguanteMySql36].Proveedor prov
+on prov.id_proveedor = compra.proveedor_id
+group by year(compra.fecha),prov.id_proveedor
+order by prov.id_proveedor desc
